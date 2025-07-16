@@ -19,7 +19,7 @@ env:
   DOTNET_VERSION: '9.0.x'
   # Environment variables for release configuration
   CONFIGURATION: Release
-  WPFAPP_ARTIFACT_NAME: k0x-workbench-app
+  WPFAPP_ARTIFACT_NAME: sample-wpf-app
   WPFAPP_CSPROJ_PATH: src/SampleWpfApp/SampleWpfApp.csproj
   TARGET_RUNTIME: win-x64
 
@@ -137,14 +137,15 @@ jobs:
 
           ARTIFACT_ZIP_NAME="${{ env.WPFAPP_ARTIFACT_NAME }}.zip"
           # Get the executable name from the extracted AssemblyName
+          APP_NAME="${{ steps.extract_exe_name.outputs.wpf_exe_name }}"
           EXE_NAME="${{ steps.extract_exe_name.outputs.wpf_exe_name }}.exe"
 
           # Create release notes
           cat > release_notes.md << EOF
-          ## K0x Workbench v$VERSION
+          ## $APP_NAME v$VERSION
 
           ### What's New
-          This release includes the latest features and improvements for K0x Workbench.
+          This release includes the latest features and improvements for $APP_NAME.
 
           ### Download
           - **Windows (x64)**: Download the zip file from the assets below
@@ -159,7 +160,7 @@ jobs:
           ### Installation
           1. Download and verify the zip file (see Verification above)
           2. Extract the zip file to your desired location
-          3. Run $EXE_NAME to start the application
+          3. Run `$EXE_NAME` to start the application
 
           ### System Requirements
           - Windows 10 version 1809 or later
