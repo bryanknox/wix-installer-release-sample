@@ -57,17 +57,6 @@ jobs:
             --output ${{ runner.temp }}/artifact-output `
             --verbosity minimal
 
-      - name: 🔒 Generate internal checksums (for files inside zip)
-        shell: pwsh
-        run: |
-          $artifactPath = "${{ runner.temp }}/artifact-output"
-          Get-ChildItem -Path $artifactPath -File -Recurse | ForEach-Object {
-            $hash = Get-FileHash -Path $_.FullName -Algorithm SHA256
-            "$($hash.Hash)  $($_.Name)" | Out-File -FilePath "$artifactPath/checksums.txt" -Append -Encoding UTF8
-          }
-          Write-Host "Generated internal checksums (included in zip):"
-          Get-Content "$artifactPath/checksums.txt"
-
       - name: 📦 Create zip archive of WPF app
         shell: pwsh
         run: |
@@ -76,14 +65,14 @@ jobs:
           Compress-Archive -Path "$artifactPath\*" -DestinationPath $zipPath -Force
           Write-Host "Created zip archive: $zipPath"
 
-      - name: 🔒 Generate external checksums (for zip file)
+      - name: 🔒 Generate checksums (for zip file)
         shell: pwsh
         run: |
           $zipPath = "${{ runner.temp }}/${{ env.WPFAPP_ARTIFACT_NAME }}.zip"
           $externalChecksumsPath = "${{ runner.temp }}/checksums.txt"
           $hash = Get-FileHash -Path $zipPath -Algorithm SHA256
           "$($hash.Hash)  $(Split-Path $zipPath -Leaf)" | Out-File -FilePath $externalChecksumsPath -Encoding UTF8
-          Write-Host "Generated external checksums (for zip file):"
+          Write-Host "Generated checksums (for zip file):"
           Get-Content $externalChecksumsPath
 
       - name: 📤 Upload WPF app zip to Artifacts
@@ -159,15 +148,13 @@ jobs:
 
           ### Download
           - **Windows (x64)**: Download the zip file from the assets below
-          - **Checksums**: Two levels of SHA256 checksums are provided for security:
+          - **Checksums**: SHA256 checksums are provided for security:
             - **checksums.txt**: Contains the checksum for the zip file itself
-            - **Internal checksums**: The zip file contains a checksums.txt with hashes for all individual files
 
           ### Verification
           1. Download both the zip file and checksums.txt
           2. Verify the zip file integrity: \`Get-FileHash $ARTIFACT_ZIP_NAME -Algorithm SHA256\`
           3. Compare with the hash in checksums.txt
-          4. After extraction, verify individual files using the checksums.txt inside the zip
 
           ### Installation
           1. Download and verify the zip file (see Verification above)
