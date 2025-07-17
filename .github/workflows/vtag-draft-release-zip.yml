@@ -4,7 +4,6 @@ on:
   workflow_dispatch: # Manual trigger.
   push:
     tags: ["v*"]
-    # branches: ["rel-wrkflw-1"] # TODO: remove branches after testing.
 
 # Security: Restrict default permissions
 permissions:
@@ -29,9 +28,34 @@ jobs:
   #  name: CI Checks
   #  uses: ./.github/workflows/ci-checks.yml
 
-  build-publish-wpf-app-artifact:
+  validate-tag-job:
+    name: Validate v-tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      has-vtag: ${{ steps.check-vtag.outputs.has-vtag }}
+    steps:
+      - name: 🏷️ Check if tag starts with 'v'
+        id: check-vtag
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -match '^refs/tags/v') {
+            $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''
+            Write-Host "✅ Tag '$tagName' starts with 'v'"
+            Write-Host "Tag name: $tagName"
+            "has-vtag=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          } else {
+            $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''
+            Write-Host "❌ Tag '$tagName' does not start with 'v'"
+            Write-Host "GITHUB_REF: $env:GITHUB_REF"
+            Write-Output "::notice title=Skipping Workflow::Tag is not a valid v-tag. ($env:GITHUB_REF)"
+            "has-vtag=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          }
+
+  build-publish-wpf-app-artifact-job:
     name: Build and publish WPF app artifact
-    # needs: ci-checks
+    needs: validate-tag-job
+    if: needs.validate-tag-job.outputs.has-vtag == 'true'
     runs-on: windows-2022
     timeout-minutes: 20
     steps:
@@ -89,15 +113,13 @@ jobs:
           path: ${{ runner.temp }}/checksums.txt
           retention-days: 7
 
-  draft-release-wpf-app:
+  draft-release-wpf-app-job:
     name: Create draft release for WPF app
     runs-on: ubuntu-latest
-    needs: build-publish-wpf-app-artifact
+    needs: build-publish-wpf-app-artifact-job
     timeout-minutes: 10
     permissions:
       contents: write
-    # TODO: Remove the branch part of the condition after testing
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/rel-wrkflw-1'
     steps:
 
       - name: 🤘 Checkout repository
@@ -120,54 +142,55 @@ jobs:
 
       - name: 🔍 Extract AssemblyName from WPF app project file
         id: extract_exe_name
-        shell: bash
+        shell: pwsh
         run: |
           # Read AssemblyName from the project file
-          ASSEMBLY_NAME=$(grep -oP '<AssemblyName>\K[^<]+' ${{ env.WPFAPP_CSPROJ_PATH }})
-          echo "wpf_exe_name=$ASSEMBLY_NAME" >> $GITHUB_OUTPUT
-          echo "Extracted WPF app exe name: $ASSEMBLY_NAME"
+          $projectContent = Get-Content $env:WPFAPP_CSPROJ_PATH -Raw
+          $assemblyName = [regex]::Match($projectContent, '<AssemblyName>([^<]+)</AssemblyName>').Groups[1].Value
+          "wpf_exe_name=$assemblyName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host "Extracted WPF app exe name: $assemblyName"
 
       - name: 📝 Generate release notes
         id: release_notes
-        shell: bash
+        shell: pwsh
         run: |
           # Extract version from tag
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          $version = $env:GITHUB_REF -replace '^refs/tags/v', ''
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-          ARTIFACT_ZIP_NAME="${{ env.WPFAPP_ARTIFACT_NAME }}.zip"
+          $artifactZipName = "${{ env.WPFAPP_ARTIFACT_NAME }}.zip"
           # Get the executable name from the extracted AssemblyName
-          APP_NAME="${{ steps.extract_exe_name.outputs.wpf_exe_name }}"
-          EXE_NAME="${{ steps.extract_exe_name.outputs.wpf_exe_name }}.exe"
+          $appName = "${{ steps.extract_exe_name.outputs.wpf_exe_name }}"
+          $exeName = "${{ steps.extract_exe_name.outputs.wpf_exe_name }}.exe"
 
-          # Create release notes
-          cat > release_notes.md << EOF
-          ## $APP_NAME v$VERSION
+          # Create release notes using StringBuilder for multiline content
+          $sb = [System.Text.StringBuilder]::new()
+          [void]$sb.AppendLine("## $appName v$version")
+          [void]$sb.AppendLine("")
+          [void]$sb.AppendLine("### What's New")
+          [void]$sb.AppendLine("This release includes the latest features and improvements for $appName.")
+          [void]$sb.AppendLine("")
+          [void]$sb.AppendLine("### Download")
+          [void]$sb.AppendLine("- **Windows (x64)**: Download the zip file from the assets below")
+          [void]$sb.AppendLine("- **Checksums**: SHA256 checksums are provided for security:")
+          [void]$sb.AppendLine("  - **checksums.txt**: Contains the checksum for the zip file itself")
+          [void]$sb.AppendLine("")
+          [void]$sb.AppendLine("### Verification")
+          [void]$sb.AppendLine("1. Download both the zip file and checksums.txt")
+          [void]$sb.AppendLine("2. Verify the zip file integrity: ``Get-FileHash $artifactZipName -Algorithm SHA256``")
+          [void]$sb.AppendLine("3. Compare with the hash in checksums.txt")
+          [void]$sb.AppendLine("")
+          [void]$sb.AppendLine("### Installation")
+          [void]$sb.AppendLine("1. Download and verify the zip file (see Verification above)")
+          [void]$sb.AppendLine("2. Extract the zip file to your desired location")
+          [void]$sb.AppendLine("3. Run ``$exeName`` to start the application")
+          [void]$sb.AppendLine("")
+          [void]$sb.AppendLine("### System Requirements")
+          [void]$sb.AppendLine("- Windows 10 version 1809 or later")
+          [void]$sb.AppendLine("- .NET 9.0 Runtime (included in self-contained build)")
 
-          ### What's New
-          This release includes the latest features and improvements for $APP_NAME.
-
-          ### Download
-          - **Windows (x64)**: Download the zip file from the assets below
-          - **Checksums**: SHA256 checksums are provided for security:
-            - **checksums.txt**: Contains the checksum for the zip file itself
-
-          ### Verification
-          1. Download both the zip file and checksums.txt
-          2. Verify the zip file integrity: \`Get-FileHash $ARTIFACT_ZIP_NAME -Algorithm SHA256\`
-          3. Compare with the hash in checksums.txt
-
-          ### Installation
-          1. Download and verify the zip file (see Verification above)
-          2. Extract the zip file to your desired location
-          3. Run `$EXE_NAME` to start the application
-
-          ### System Requirements
-          - Windows 10 version 1809 or later
-          - .NET 9.0 Runtime (included in self-contained build)
-          EOF
-
-          echo "Generated release notes"
+          $sb.ToString() | Out-File -FilePath "release_notes.md" -Encoding utf8
+          Write-Host "Generated release notes"
 
       - name: 🚀 Create draft release
         uses: softprops/action-gh-release@v2
