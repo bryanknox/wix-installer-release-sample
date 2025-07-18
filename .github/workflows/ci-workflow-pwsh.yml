@@ -40,14 +40,16 @@ jobs:
         run: |
           Write-Output "::notice title=Running Tests::Executing Pester tests"
 
+          $testResultsPath = Join-Path ${{ runner.temp }} 'TestResults.xml'
+
           # Create Pester configuration
           $pesterConfig = New-PesterConfiguration
           $pesterConfig.Run.Path = '.github/workflows/pwsh-unit-tests'
           $pesterConfig.Run.Exit = $true
           $pesterConfig.Output.Verbosity = 'Detailed'
           $pesterConfig.TestResult.Enabled = $true
-          $pesterConfig.TestResult.OutputFormat = 'NUnitXml'
-          $pesterConfig.TestResult.OutputPath = 'TestResults.xml'
+          $pesterConfig.TestResult.OutputFormat = 'JUnitXml'
+          $pesterConfig.TestResult.OutputPath = $testResultsPath
 
           # Run tests
           try {
@@ -60,10 +62,10 @@ jobs:
           }
 
       - name: Publish test results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: always()
         with:
           name: PowerShell Tests
-          path: 'TestResults.xml'
-          reporter: java-junit
+          path: '${{ runner.temp }}/TestResults.xml'
+          reporter: junit
           fail-on-error: true
