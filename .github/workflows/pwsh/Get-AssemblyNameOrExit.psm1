@@ -1,3 +1,6 @@
+# Import the Write-GitHubAnnotation module
+Import-Module "$PSScriptRoot\Write-GitHubAnnotation.psm1" -Force
+
 function Get-AssemblyNameOrExit {
     <#
     .SYNOPSIS
@@ -38,7 +41,7 @@ function Get-AssemblyNameOrExit {
             [string]$ErrorMessage
         )
 
-        Write-Host "::error title=$ErrorTitle::$ErrorMessage"
+        Write-GitHubAnnotation -Type "error" -Title $ErrorTitle -Message $ErrorMessage
 
         if ($ThrowOnError) {
             throw $ErrorMessage
@@ -108,7 +111,13 @@ function Get-AssemblyNameOrExit {
                 -ErrorMessage "No explicit AssemblyName found in project file '$ProjectPath' and unable to determine project name from filename."
         }
 
-        Write-Host "No explicit AssemblyName found, using project filename: $projectFileName"
+        $message= "No explicit AssemblyName found, using project filename: $projectFileName"
+
+        Write-GitHubAnnotation `
+            -Type "notice" `
+            -Title "Using Project Name as AssemblyName" `
+            -Message $message
+
         return $projectFileName
     }
 }

@@ -1,5 +1,8 @@
 BeforeAll {
-    # Import the module
+    # Import the Write-GitHubAnnotation module first
+    Import-Module "$PSScriptRoot\..\pwsh\Write-GitHubAnnotation.psm1" -Force
+
+    # Import the module under test
     Import-Module "$PSScriptRoot\..\pwsh\Get-AssemblyNameOrExit.psm1" -Force
 }
 
@@ -18,6 +21,12 @@ Describe "Get-AssemblyNameOrExit" {
     }
 
     Context "Success scenarios" {
+
+        BeforeEach {
+            # Mock Write-GitHubAnnotation to prevent actual workflow commands during tests
+            Mock Write-GitHubAnnotation -ModuleName "Get-AssemblyNameOrExit"
+        }
+
         It "Returns explicit AssemblyName when present" {
             # Arrange
             $projectContent = @"
@@ -63,6 +72,11 @@ Describe "Get-AssemblyNameOrExit" {
     }
 
     Context "Error scenarios" {
+        BeforeEach {
+            # Mock Write-GitHubAnnotation to prevent actual workflow commands during tests
+            Mock Write-GitHubAnnotation -ModuleName "Get-AssemblyNameOrExit"
+        }
+
         It "Throws exception for any file access/parsing error when ThrowOnError is specified" {
             # Test multiple error scenarios to ensure they all throw exceptions
 
@@ -107,6 +121,91 @@ Describe "Get-AssemblyNameOrExit" {
                 Get-AssemblyNameOrExit -ProjectPath $emptyAssemblyNamePath -ThrowOnError
             } | Should -Throw "*AssemblyName element*is empty*"
         }
+
+        It "Calls Write-GitHubAnnotation with correct parameters for file not found error" {
+            # Arrange
+            $nonExistentPath = Join-Path $script:TestDir "NonExistent.csproj"
+
+            # Act & Assert
+            {
+                Get-AssemblyNameOrExit -ProjectPath $nonExistentPath -ThrowOnError
+            } | Should -Throw
+
+            # Verify the workflow command was called correctly
+            Should -Invoke Write-GitHubAnnotation -ModuleName "Get-AssemblyNameOrExit" -Times 1 -Exactly -ParameterFilter {
+                $Type -eq "error" -and
+                $Title -eq "Project File Not Found" -and
+                $Message -like "*does not exist*"
+            }
+        }
+
+        It "Calls Write-GitHubAnnotation with correct parameters for empty file error" {
+            # Arrange
+            $emptyPath = Join-Path $script:TestDir "Empty.csproj"
+            Set-Content -Path $emptyPath -Value ""
+
+            # Act & Assert
+            {
+                Get-AssemblyNameOrExit -ProjectPath $emptyPath -ThrowOnError
+            } | Should -Throw
+
+            # Verify the workflow command was called correctly
+            Should -Invoke Write-GitHubAnnotation -ModuleName "Get-AssemblyNameOrExit" -Times 1 -Exactly -ParameterFilter {
+                $Type -eq "error" -and
+                $Title -eq "Empty Project File" -and
+                $Message -like "*empty or contains only whitespace*"
+            }
+        }
+
+        It "Calls Write-GitHubAnnotation with correct parameters for invalid XML error" {
+            # Arrange
+            $invalidXmlPath = Join-Path $script:TestDir "InvalidXml.csproj"
+            $invalidXmlContent = @"
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>InvalidXmlApp
+  </PropertyGroup>
+</Project>
+"@
+            Set-Content -Path $invalidXmlPath -Value $invalidXmlContent
+
+            # Act & Assert
+            {
+                Get-AssemblyNameOrExit -ProjectPath $invalidXmlPath -ThrowOnError
+            } | Should -Throw
+
+            # Verify the workflow command was called correctly
+            Should -Invoke Write-GitHubAnnotation -ModuleName "Get-AssemblyNameOrExit" -Times 1 -Exactly -ParameterFilter {
+                $Type -eq "error" -and
+                $Title -eq "Invalid XML in Project File" -and
+                $Message -like "*contains invalid XML*"
+            }
+        }
+
+        It "Calls Write-GitHubAnnotation with correct parameters for empty AssemblyName error" {
+            # Arrange
+            $emptyAssemblyNamePath = Join-Path $script:TestDir "EmptyAssemblyName.csproj"
+            $emptyAssemblyNameContent = @"
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName></AssemblyName>
+  </PropertyGroup>
+</Project>
+"@
+            Set-Content -Path $emptyAssemblyNamePath -Value $emptyAssemblyNameContent
+
+            # Act & Assert
+            {
+                Get-AssemblyNameOrExit -ProjectPath $emptyAssemblyNamePath -ThrowOnError
+            } | Should -Throw
+
+            # Verify the workflow command was called correctly
+            Should -Invoke Write-GitHubAnnotation -ModuleName "Get-AssemblyNameOrExit" -Times 1 -Exactly -ParameterFilter {
+                $Type -eq "error" -and
+                $Title -eq "Empty AssemblyName" -and
+                $Message -like "*AssemblyName element*is empty*"
+            }
+        }
     }
 }
 
@@ -116,6 +215,7 @@ Describe "Get-AssemblyNameOrExit Exit Code Tests" {
         # Create wrapper script for testing exit codes
         $script:WrapperScript = @"
 param([string]`$ProjectPath)
+Import-Module (Join-Path `$PSScriptRoot ".." "pwsh" "Write-GitHubAnnotation.psm1") -Force
 Import-Module (Join-Path `$PSScriptRoot ".." "pwsh" "Get-AssemblyNameOrExit.psm1") -Force
 Get-AssemblyNameOrExit -ProjectPath `$ProjectPath
 "@

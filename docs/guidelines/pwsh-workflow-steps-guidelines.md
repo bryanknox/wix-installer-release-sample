@@ -20,16 +20,39 @@ for use in GitHub Actions workflow steps.
 - Put complex workflow step logic in separate PowerShell scripts or functions
   in the `.github/workflows/pwsh` folder.
 
-## Logging Errors, Warnings, and Notices
+## Logging Error, Warning, and Notice Annotations
 
-- Use GitHub workflow command for logging errors, warnings, and notices.
+- Use GitHub workflow commands for logging errors, warnings, and notices that should be displayed as annotations in the GitHub Actions workflow run UI.
 
-Example
+- In workflow `.yml` file `shell: pwsh` steps, annotations can be written using the syntax in the following example. Note that `title` is optional.
+  ```powershell
+  Write-Output "::error title=Setup Failed::Missing config file."
+  Write-Output "::warning::Validation API times-out."
+  Write-Output "::Notice title=Skipping workflow::No v-tag."
+  ```
+
+### Use `Write-GitHubAnnotation` in PowerShell files
+
+- In PowerShell script and module files, use the custom `Write-GitHubAnnotation` function for logging error, warning, and notice annotations to GitHub workflow runs.
+
+  - See `.github\workflows\pwsh\Write-GitHubAnnotation.psm1`
+
+- The `Write-GitHubAnnotation` function should be mocked in unit tests so that no annotations are actually created when the tests are run within a GitHub workflow.
+
+Examples
+
 ```powershell
-Write-Output "::error title=Setup Failed::Missing config file."
-Write-Output "::warning title=Skipping validation::Validation API times-out."
-Write-Output "::Notice title=Skipping workflow::No v-tag."
+Write-GitHubAnnotation -Type error -Message "Missing config file."
+
+Write-GitHubAnnotation `
+-Type warning `
+-Title "Skipping validation" `
+-Message "Validation API times-out."
+
+Write-GitHubAnnotation -Type notice -Message "Data loaded."
 ```
+Note that the `-Title` parameter is optional.
+
 
 ## Script and Module Files
 
