@@ -11,13 +11,15 @@ Functions that return a value on success can use this technique when a value can
 When used in GitHub workflow steps, PowerShell with an exit code of `1` will cause the step to fail.
 
 - When the goal of the function or script cannot be achieved,
-log an error using `::error` workflow commands, and then `exit 1`.
+log an error using the custom `Write-GitHubAnnotation` function, and then `exit 1`.
 Skipping any subsequent logic.
+
+  - See `.github\workflows\pwsh\Write-GitHubAnnotation.psm1`
 
 - The function or script name should include an `OrExit` suffix.<br>
   To help indicate that it has behavior.
 
-- Catch expections, log them as errors using `::error` workflow commands, and then `exit 1`, so that exception catch logic is not required in workflow steps.
+- Catch expections, log them as errors using the custom `Write-GitHubAnnotation` function, and then `exit 1`, so that exception catch logic is not required in workflow steps.
 
 - Add an optional `-ThrowOnError` switch parameter. When specified, the function should throw an exception instead of calling `exit 1`. This will be useful for unit testing, and when calling from scripts that need to handle exceptions directly.
 
@@ -27,7 +29,7 @@ Example PowerShell snippet:
 if (someErrorWasDetected) {
     $errorTitle = "The Error Title"
     $errorMessage = "The error message."
-    Write-Host "::error title=The Error Title::$errorMessage"
+    Write-GitHubAnnotation -Type error -Title $errorTitle -Message $errorMessage
     . . .
     Write-Host "Additonal info about the error condition."
     if ($ThrowOnError) {

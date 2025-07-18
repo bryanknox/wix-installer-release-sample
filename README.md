@@ -7,9 +7,11 @@ of the release workflows.
 
 ## Folder structure
 
-`src\SampleWpfApp` - Sample WPF app. Just a raw sample doesn't do anything interesting.
-
 `docs\guidelines` - Guidelines for devs and agents developing in this repo.
+
+`scripts\` - Scripts for development and testing.
+
+`src\SampleWpfApp` - Sample WPF app. Just a raw sample doesn't do anything interesting.
 
 `.github\chatmodes` - GitHub Copilot custom chat modes.
 
