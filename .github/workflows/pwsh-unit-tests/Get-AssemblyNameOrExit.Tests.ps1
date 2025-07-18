@@ -6,7 +6,8 @@ BeforeAll {
 Describe "Get-AssemblyNameOrExit" {
     BeforeEach {
         # Create a temporary directory for test files
-        $script:TestDir = New-Item -ItemType Directory -Path "$env:TEMP\Get-AssemblyNameOrExit-Tests-$(Get-Date -Format 'yyyyMMdd-HHmmss')" -Force
+        $tempPath = [System.IO.Path]::GetTempPath()
+        $script:TestDir = New-Item -ItemType Directory -Path (Join-Path $tempPath "Get-AssemblyNameOrExit-Tests-$(Get-Date -Format 'yyyyMMdd-HHmmss')") -Force
     }
 
     AfterEach {
@@ -115,7 +116,7 @@ Describe "Get-AssemblyNameOrExit Exit Code Tests" {
         # Create wrapper script for testing exit codes
         $script:WrapperScript = @"
 param([string]`$ProjectPath)
-Import-Module "`$PSScriptRoot\..\pwsh\Get-AssemblyNameOrExit.psm1" -Force
+Import-Module (Join-Path `$PSScriptRoot ".." "pwsh" "Get-AssemblyNameOrExit.psm1") -Force
 Get-AssemblyNameOrExit -ProjectPath `$ProjectPath
 "@
         $script:WrapperPath = Join-Path $PSScriptRoot "Get-AssemblyNameOrExit-Wrapper.ps1"
@@ -131,7 +132,8 @@ Get-AssemblyNameOrExit -ProjectPath `$ProjectPath
 
     BeforeEach {
         # Create a temporary directory for test files
-        $script:TestDir = New-Item -ItemType Directory -Path "$env:TEMP\Get-AssemblyNameOrExit-ExitTests-$(Get-Date -Format 'yyyyMMdd-HHmmss')" -Force
+        $tempPath = [System.IO.Path]::GetTempPath()
+        $script:TestDir = New-Item -ItemType Directory -Path (Join-Path $tempPath "Get-AssemblyNameOrExit-ExitTests-$(Get-Date -Format 'yyyyMMdd-HHmmss')") -Force
     }
 
     AfterEach {
