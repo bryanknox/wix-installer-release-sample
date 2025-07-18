@@ -28,22 +28,26 @@ jobs:
   #  name: CI Checks
   #  uses: ./.github/workflows/ci-checks.yml
 
-  validate-tag-job:
-    name: Validate v-tag
+  get-validate-version-job:
+    name: Get and validate version from v-tag job
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      has-vtag: ${{ steps.check-vtag.outputs.has-vtag }}
+      has-vtag: ${{ steps.get-and-check-version.outputs.has-vtag }}
+      release-version: ${{ steps.get-and-check-version.outputs.RELEASE_VERSION }}
     steps:
-      - name: 🏷️ Check if tag starts with 'v'
-        id: check-vtag
+      - name: 🏷️ Get and check version from v-tag
+        id: get-and-check-version
         shell: pwsh
         run: |
           if ($env:GITHUB_REF -match '^refs/tags/v') {
             $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''
+            $version = $tagName -replace '^v', ''
             Write-Host "Tag name: $tagName"
+            Write-Host "Release version: $version"
             Write-Host "✅ Tag '$tagName' starts with 'v'"
             "has-vtag=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           } else {
             $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''
             Write-Host "❌ Tag '$tagName' does not start with 'v'"
@@ -54,8 +58,8 @@ jobs:
 
   build-publish-wpf-app-artifact-job:
     name: Build and publish WPF app artifact
-    needs: validate-tag-job
-    if: needs.validate-tag-job.outputs.has-vtag == 'true'
+    needs: get-validate-version-job
+    if: needs.get-validate-version-job.outputs.has-vtag == 'true'
     runs-on: windows-2022
     timeout-minutes: 20
     steps:
@@ -159,9 +163,8 @@ jobs:
         id: release_notes
         shell: pwsh
         run: |
-          # Extract version from tag
-          $version = $env:GITHUB_REF -replace '^refs/tags/v', ''
-          "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          # Use the version extracted from the get-validate-version-job
+          $version = "${{ needs.get-validate-version-job.outputs.release-version }}"
 
           $artifactZipName = "${{ env.WPFAPP_ARTIFACT_NAME }}.zip"
           # Get the executable name from the extracted AssemblyName
@@ -203,7 +206,7 @@ jobs:
           draft: true
           generate_release_notes: true
           fail_on_unmatched_files: true
-          name: v${{ steps.release_notes.outputs.RELEASE_VERSION }} ${{ steps.extract_exe_name.outputs.WPF_EXE_NAME }}
+          name: v${{ needs.get-validate-version-job.outputs.release-version }} ${{ steps.extract_exe_name.outputs.WPF_EXE_NAME }}
           tag_name: ${{ github.ref_name }}
           body_path: release_notes.md
           files: |
