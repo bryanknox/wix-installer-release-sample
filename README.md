@@ -59,6 +59,8 @@ A draft release of the sample app can be created by pushing a v-tag to the GitHu
 
 ```PowerShell
 git tag -a v1.2.3 -m "Release version 1.2.3"
+
+git push origin v1.2.3
 ```
 
 Doing that will trigger the `.github\workflows\vtag-draft-release-zip.yml` GitHub Actions workflow.

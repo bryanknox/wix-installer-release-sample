@@ -41,8 +41,8 @@ jobs:
         run: |
           if ($env:GITHUB_REF -match '^refs/tags/v') {
             $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''
-            Write-Host "✅ Tag '$tagName' starts with 'v'"
             Write-Host "Tag name: $tagName"
+            Write-Host "✅ Tag '$tagName' starts with 'v'"
             "has-vtag=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           } else {
             $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''

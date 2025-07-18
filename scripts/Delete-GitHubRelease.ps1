@@ -54,16 +54,15 @@
       repository with an 'origin' remote
 
     This script will fail if:
-    - The specified release doesn't exist
-    - The user doesn't have permission to delete the release
-    - The remote tag doesn't exist
-    - The local tag doesn't exist (this will show a warning but won't stop
-      execution)
     - Auto-detection is used but no 'origin' remote is found or the remote
       URL is not a GitHub repository
+    - The user doesn't have permission to delete the releas
 
-    Author: Generated for wpf-release-play project
-    Version: 1.1
+   This script will attempt to delete each of the following, and output
+   warnings for any failures:
+    - release in the GitHub repo
+    - remote tag
+    - local tag
 #>
 
 param (
@@ -127,9 +126,12 @@ Write-Host ""
 Write-Host "🗑️  Deleting release '$TagName' from '$Repo'..."
 gh release delete $TagName --repo $Repo --yes
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Failed to delete release '$TagName' from '$Repo'."
+    Write-Host "❌ Warning: Failed to delete release '$TagName' from '$Repo'."
     Write-Host "   GitHub CLI command failed with exit code $LASTEXITCODE."
-    exit 1
+}
+else {
+    Write-Host "✅ Release '$TagName' deleted successfully from '$Repo'."
+    $isReleaseDeleted = $true
 }
 
 # Step 2: Delete the remote tag from origin
@@ -137,9 +139,8 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "🏷️  Deleting remote tag '$TagName'..."
 git push origin --delete $TagName
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Failed to delete remote tag '$TagName'."
+    Write-Host "⚠️ Warning: Failed to delete remote tag '$TagName'."
     Write-Host "   Git command failed with exit code $LASTEXITCODE."
-    exit 1
 }
 
 # Step 3: Delete the local tag
@@ -149,9 +150,5 @@ git tag -d $TagName
 if ($LASTEXITCODE -ne 0) {
     Write-Host "⚠️  Warning: Failed to delete local tag '$TagName'."
     Write-Host "   Git command failed with exit code $LASTEXITCODE."
-    Write-Host "   Local tag may not exist, continuing..."
 }
-
-Write-Host ""
-Write-Host "✅ Release and tag '$TagName' deleted successfully from '$Repo'."
 Write-Host ""
