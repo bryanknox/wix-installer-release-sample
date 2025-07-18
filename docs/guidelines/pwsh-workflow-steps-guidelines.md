@@ -88,8 +88,9 @@ This help provide transparency and control within the workflow file for the vari
 
 ### Unit Tests Guidelines
 
-- Maintain unit tests in the `.github/workflows/pwsh.unit-tests` sub-folder.
+- Maintain unit tests in the `.github/workflows/pwsh-unit-tests` folder.
 
 - Separate test `.Tests.ps1` file for each function or script being tested.
+  - e.g. `.github/workflows/pwsh-unit-tests/{script-function-name}.Tests.ps1`
 
 - Mock all external dependencies (like `Invoke-RestMethod`)
