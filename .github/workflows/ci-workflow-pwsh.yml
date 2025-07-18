@@ -67,5 +67,5 @@ jobs:
         with:
           name: PowerShell Tests
           path: '${{ runner.temp }}/TestResults.xml'
-          reporter: junit
+          reporter: java-junit
           fail-on-error: true
