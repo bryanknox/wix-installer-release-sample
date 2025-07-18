@@ -63,18 +63,25 @@ Write-Output "::Notice title=Skipping workflow::No v-tag."
 
 - The function should return the raw data to be output by the step.
 
-- The workflow step should then use GitHub `Write-Host "{environment_variable_name}={value}" >> "$GITHUB_ENV"` workflow commands to output the data returned from the function as environment variables that can be accessed in subsequent workflow steps.
+- The workflow step should then use GitHub workflow commands to output the data returned from the function as step output environment variables that can be accessed in subsequent workflow steps.
 
 Example:
 ```PowerShell
 steps:
-  - name: Call PowerShell function and set output
-    id: call_function
+
+  - name: Call PowerShell function and set output variable
+    id: source_function
     shell: pwsh
     run: |
       Import-Module "./pwsh/Get-Greeting.psm1" -Force
       $result = Get-Greeting -name "GitHub User"
-      Write-Host "GREETING=$result" >> $env:GITHUB_OUTPUT
+      "GREETING=$result" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+  - name: Use output variable
+    shell: pwsh
+    run: |
+      $greeting = "${{ steps.source_function.outputs.GREETING }}"
+      Write-Host "Greeting: $greeting"
 ```
 
 This help provide transparency and control within the workflow file for the variable names that are used, and helps make it clear where the values come from.
