@@ -1,4 +1,4 @@
-name: draft-vtag-zip-release
+name: draft-vtag-release-zip
 
 on:
   workflow_dispatch: # Manual trigger.
