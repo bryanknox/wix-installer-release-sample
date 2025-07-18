@@ -1,0 +1,67 @@
+name: CI PowerShell Workflow
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - '.github/workflows/pwsh/**'
+      - '.github/workflows/pwsh-unit-tests/**'
+  pull_request:
+    branches: ['**']
+    paths:
+      - '.github/workflows/pwsh/**'
+      - '.github/workflows/pwsh-unit-tests/**'
+
+jobs:
+  test-powershell-scripts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install PowerShell modules
+        shell: pwsh
+        run: |
+          Write-Output "::notice title=Installing Pester::Installing Pester 5.7.x module"
+          Install-Module -Name Pester -Force -Scope CurrentUser `
+              -RequiredVersion 5.7.0 -SkipPublisherCheck
+          Write-Output "::notice title=Pester Installed::Pester module installed successfully"
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          Write-Output "::notice title=Running Tests::Executing Pester tests"
+
+          # Create Pester configuration
+          $pesterConfig = New-PesterConfiguration
+          $pesterConfig.Run.Path = '.github/workflows/pwsh-unit-tests'
+          $pesterConfig.Run.Exit = $true
+          $pesterConfig.Output.Verbosity = 'Detailed'
+          $pesterConfig.TestResult.Enabled = $true
+          $pesterConfig.TestResult.OutputFormat = 'NUnitXml'
+          $pesterConfig.TestResult.OutputPath = 'TestResults.xml'
+
+          # Run tests
+          try {
+              Invoke-Pester -Configuration $pesterConfig
+              Write-Output "::notice title=Tests Passed::All PowerShell tests passed successfully"
+          }
+          catch {
+              Write-Output "::error title=Tests Failed::PowerShell tests failed with error: $($_.Exception.Message)"
+              exit 1
+          }
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: PowerShell Tests
+          path: 'TestResults.xml'
+          reporter: java-junit
+          fail-on-error: true
