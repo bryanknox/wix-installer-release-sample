@@ -175,6 +175,11 @@ jobs:
           $appName = "${{ steps.extract_exe_name.outputs.WPF_EXE_NAME }}"
           $exeName = "${{ steps.extract_exe_name.outputs.WPF_EXE_NAME }}.exe"
 
+          Write-Host "version: $version"
+          Write-Host "artifactZipName: $artifactZipName"
+          Write-Host "appName: $appName"
+          Write-Host "exeName: $exeName"
+
           # Create release notes using StringBuilder for multiline content
           $sb = [System.Text.StringBuilder]::new()
           [void]$sb.AppendLine("## v$version $appName")
