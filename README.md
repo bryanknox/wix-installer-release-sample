@@ -41,15 +41,24 @@ Invoke-Pester -Path "Get-AssemblyNameOrExit.Tests.ps1" -Output Detailed
 Invoke-Pester -Path "."
 ```
 
-# Run with Code Coverage (if you want to see coverage)
+#### Run with Code Coverage (if you want to see coverage)
 
 ```PowerShell
 Invoke-Pester -Path "Get-AssemblyNameOrExit.Tests.ps1" -CodeCoverage "../pwsh/Get-AssemblyNameOrExit.psm1"
 ```
 
-# Run Tests and Generate Results File
+#### Run Tests and Generate Results File
 
 ```PowerShell
 Invoke-Pester -Path "Get-AssemblyNameOrExit.Tests.ps1" -OutputFile "TestResults.xml" -OutputFormat NUnitXml
 ```
 
+## Create a Draft Release
+
+A draft release of the sample app can be created by pushing a v-tag to the GitHub repo.
+
+```PowerShell
+git tag -a v1.2.3 -m "Release version 1.2.3"
+```
+
+Doing that will trigger the `.github\workflows\vtag-draft-release-zip.yml` GitHub Actions workflow.
