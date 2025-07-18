@@ -30,15 +30,15 @@ jobs:
       - name: Install PowerShell modules
         shell: pwsh
         run: |
-          Write-Output "::notice title=Installing Pester::Installing Pester 5.7.x module"
+          Write-Host "::notice title=Installing Pester::Installing Pester 5.7.x module"
           Install-Module -Name Pester -Force -Scope CurrentUser `
               -RequiredVersion 5.7.0 -SkipPublisherCheck
-          Write-Output "::notice title=Pester Installed::Pester module installed successfully"
+          Write-Host "::notice title=Pester Installed::Pester module installed successfully"
 
       - name: Run Pester tests
         shell: pwsh
         run: |
-          Write-Output "::notice title=Running Tests::Executing Pester tests"
+          Write-Host "::notice title=Running Tests::Executing Pester tests"
 
           $testResultsPath = Join-Path ${{ runner.temp }} 'TestResults.xml'
 
@@ -54,10 +54,10 @@ jobs:
           # Run tests
           try {
               Invoke-Pester -Configuration $pesterConfig
-              Write-Output "::notice title=Tests Passed::All PowerShell tests passed successfully"
+              Write-Host "::notice title=Tests Passed::All PowerShell tests passed successfully"
           }
           catch {
-              Write-Output "::error title=Tests Failed::PowerShell tests failed with error: $($_.Exception.Message)"
+              Write-Host "::error title=Tests Failed::PowerShell tests failed with error: $($_.Exception.Message)"
               exit 1
           }
 
