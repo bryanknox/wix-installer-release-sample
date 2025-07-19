@@ -18,7 +18,6 @@ env:
   DOTNET_VERSION: '9.0.x'
   # Environment variables for release configuration
   CONFIGURATION: Release
-  WPFAPP_ARTIFACT_NAME: sample-wpf-app
   WPFAPP_CSPROJ_PATH: src/SampleWpfApp/SampleWpfApp.csproj
   TARGET_RUNTIME: win-x64
 
@@ -64,6 +63,8 @@ jobs:
     if: needs.get-version-job.outputs.has-vtag == 'true'
     runs-on: windows-2022
     timeout-minutes: 20
+    outputs:
+      wpf-app-assembly-name: ${{ steps.get-assembly-name.outputs.WPF_APP_ASSEMBLY_NAME }}
     steps:
 
       - name: 🤘 Checkout repository
@@ -75,6 +76,23 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 🔍 Extract AssemblyName from WPF app project
+        id: get-assembly-name
+        shell: pwsh
+        run: |
+          # Import the module
+          Import-Module "./.github/workflows/pwsh/Get-AssemblyNameOrExit.psm1" -Force
+
+          # Call the function and capture result
+          $assemblyName = Get-AssemblyNameOrExit -ProjectPath $env:WPFAPP_CSPROJ_PATH
+
+          Write-Host "Extracted WPF app exe name: $assemblyName"
+
+          # Output as workflow step variable.
+          "WPF_APP_ASSEMBLY_NAME=$assemblyName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+          # WPF_APP_ASSEMBLY_NAME is the name of the WPF app executable's assembly without any file extension.
 
       - name: 📦 dotnet publish WPF app artifacts
         shell: pwsh
@@ -91,14 +109,14 @@ jobs:
         shell: pwsh
         run: |
           $artifactPath = "${{ runner.temp }}/artifact-output"
-          $zipPath = "${{ runner.temp }}/${{ env.WPFAPP_ARTIFACT_NAME }}.zip"
+          $zipPath = "${{ runner.temp }}/${{ steps.get-assembly-name.outputs.WPF_APP_ASSEMBLY_NAME }}.zip"
           Compress-Archive -Path "$artifactPath\*" -DestinationPath $zipPath -Force
           Write-Host "Created zip archive: $zipPath"
 
       - name: 🔒 Generate checksums (for zip file)
         shell: pwsh
         run: |
-          $zipPath = "${{ runner.temp }}/${{ env.WPFAPP_ARTIFACT_NAME }}.zip"
+          $zipPath = "${{ runner.temp }}/${{ steps.get-assembly-name.outputs.WPF_APP_ASSEMBLY_NAME }}.zip"
           $externalChecksumsPath = "${{ runner.temp }}/checksums.txt"
           $hash = Get-FileHash -Path $zipPath -Algorithm SHA256
           "$($hash.Hash)  $(Split-Path $zipPath -Leaf)" | Out-File -FilePath $externalChecksumsPath -Encoding UTF8
@@ -108,8 +126,8 @@ jobs:
       - name: 📤 Upload WPF app zip to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.WPFAPP_ARTIFACT_NAME }}-zip
-          path: ${{ runner.temp }}/${{ env.WPFAPP_ARTIFACT_NAME }}.zip
+          name: ${{ steps.get-assembly-name.outputs.WPF_APP_ASSEMBLY_NAME }}-zip
+          path: ${{ runner.temp }}/${{ steps.get-assembly-name.outputs.WPF_APP_ASSEMBLY_NAME }}.zip
           retention-days: 7
 
       - name: 📤 Upload checksums to Artifacts
@@ -137,7 +155,7 @@ jobs:
       - name: 📥 Download zip artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.WPFAPP_ARTIFACT_NAME }}-zip
+          name: ${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}-zip
           path: ${{ runner.temp }}/dist
 
       - name: 📥 Download checksums artifact
@@ -146,34 +164,17 @@ jobs:
           name: checksums
           path: ${{ runner.temp }}/dist
 
-      - name: 🔍 Extract AssemblyName from WPF app project file
-        id: extract_exe_name
-        shell: pwsh
-        run: |
-          # Import the module
-          Import-Module "./.github/workflows/pwsh/Get-AssemblyNameOrExit.psm1" -Force
-
-          # Call the function and capture result
-          $assemblyName = Get-AssemblyNameOrExit -ProjectPath $env:WPFAPP_CSPROJ_PATH
-
-          Write-Host "Extracted WPF app exe name: $assemblyName"
-
-          # Output as workflow step variable.
-          "WPF_EXE_NAME=$assemblyName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
-          # WPF_EXE_NAME is the name of the WPF app executable's assembly without any file extension.
-
       - name: 📝 Generate release notes
-        id: release_notes
+        id: release-notes
         shell: pwsh
         run: |
           # Use the version extracted from the get-version-job
           $version = "${{ needs.get-version-job.outputs.release-version }}"
 
-          $artifactZipName = "${{ env.WPFAPP_ARTIFACT_NAME }}.zip"
+          $artifactZipName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}.zip"
           # Get the executable name from the extracted AssemblyName
-          $appName = "${{ steps.extract_exe_name.outputs.WPF_EXE_NAME }}"
-          $exeName = "${{ steps.extract_exe_name.outputs.WPF_EXE_NAME }}.exe"
+          $appName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}"
+          $exeName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}.exe"
 
           Write-Host "version: $version"
           Write-Host "artifactZipName: $artifactZipName"
@@ -206,17 +207,17 @@ jobs:
           [void]$sb.AppendLine("- Windows 10 version 1809 or later")
           [void]$sb.AppendLine("- .NET 9.0 Runtime (included in self-contained build)")
 
-          $sb.ToString() | Out-File -FilePath "release_notes.md" -Encoding utf8
+          $sb.ToString() | Out-File -FilePath "release-notes.md" -Encoding utf8
           Write-Host "Generated release notes"
 
       - name: 🚀 Create draft release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          generate_release_notes: true
+          generate_release-notes: true
           fail_on_unmatched_files: true
-          name: v${{ needs.get-version-job.outputs.release-version }} ${{ steps.extract_exe_name.outputs.WPF_EXE_NAME }}
+          name: v${{ needs.get-version-job.outputs.release-version }} ${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}
           tag_name: ${{ github.ref_name }}
-          body_path: release_notes.md
+          body_path: release-notes.md
           files: |
             ${{ runner.temp }}/dist/*

@@ -93,7 +93,7 @@ Example:
 steps:
 
   - name: Call PowerShell function and set output variable
-    id: source_function
+    id: source-function
     shell: pwsh
     run: |
       Import-Module "./pwsh/Get-Greeting.psm1" -Force
@@ -103,7 +103,7 @@ steps:
   - name: Use output variable
     shell: pwsh
     run: |
-      $greeting = "${{ steps.source_function.outputs.GREETING }}"
+      $greeting = "${{ steps.source-function.outputs.GREETING }}"
       Write-Host "Greeting: $greeting"
 ```
 
