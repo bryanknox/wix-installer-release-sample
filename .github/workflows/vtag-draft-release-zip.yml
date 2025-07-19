@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      has-vtag: ${{ steps.get-version.outputs.has-vtag }}
+      has-vtag: ${{ steps.get-version.outputs.HAS_VTAG }}
       release-version: ${{ steps.get-version.outputs.RELEASE_VERSION }}
     steps:
       - name: 🏷️ Get and check version from v-tag
@@ -46,7 +46,7 @@ jobs:
             Write-Host "Release version: $version"
             Write-Host "✅ Tag '$tagName' starts with 'v'"
             # Output as workflow step variables.
-            "has-vtag=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "HAS_VTAG=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
             "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           } else {
             $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''
@@ -54,7 +54,7 @@ jobs:
             Write-Host "GITHUB_REF: $env:GITHUB_REF"
             Write-Output "::warning title=Skipping Workflow::Tag is not a valid v-tag. ($env:GITHUB_REF)"
             # Output as workflow step variable.
-            "has-vtag=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "HAS_VTAG=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           }
 
   build-publish-wpf-app-artifact-job:
