@@ -18,7 +18,7 @@ env:
   DOTNET_VERSION: '9.0.x'
   # Environment variables for release configuration
   CONFIGURATION: Release
-  WPFAPP_CSPROJ_PATH: src/SampleWpfApp/SampleWpfApp.csproj
+  WPF_APP_CSPROJ_PATH: src/SampleWpfApp/SampleWpfApp.csproj
   TARGET_RUNTIME: win-x64
 
 jobs:
@@ -85,7 +85,7 @@ jobs:
           Import-Module "./.github/workflows/pwsh/Get-AssemblyNameOrExit.psm1" -Force
 
           # Call the function and capture result
-          $assemblyName = Get-AssemblyNameOrExit -ProjectPath $env:WPFAPP_CSPROJ_PATH
+          $assemblyName = Get-AssemblyNameOrExit -ProjectPath $env:WPF_APP_CSPROJ_PATH
 
           Write-Host "Extracted WPF app assembly name: $assemblyName"
 
@@ -98,7 +98,7 @@ jobs:
         shell: pwsh
         run: |
           dotnet publish `
-            $env:WPFAPP_CSPROJ_PATH `
+            $env:WPF_APP_CSPROJ_PATH `
             --configuration $env:CONFIGURATION `
             --self-contained `
             --runtime $env:TARGET_RUNTIME `
