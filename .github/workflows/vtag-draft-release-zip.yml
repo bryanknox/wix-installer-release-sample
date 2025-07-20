@@ -145,7 +145,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ARTIFACT_NAME }}
-          path: ${{ runner.temp }}/${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_PATH }}
+          path: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_PATH }}
           retention-days: 7
 
       - name: 📤 Upload checksums to Artifacts
