@@ -4,7 +4,7 @@ Guidelines for PowerShell functions and scripts that implement the *OrExit* patt
 
 ## `OrExit` Pattern for Functions and Scripts
 
-Use the `OrExit` pattern in PowerShell scripts and functions that should immediatly exit (including exiting any calling PowerShellthe in nested contexts) when the goal cannot be acheived or an error is encountered.
+Use the `OrExit` pattern in PowerShell scripts and functions that should immediately exit (including exiting any calling PowerShell in nested contexts) when the goal cannot be achieved or an error is encountered.
 
 Functions that return a value on success can use this technique when a value cannot be obtained for return.
 
