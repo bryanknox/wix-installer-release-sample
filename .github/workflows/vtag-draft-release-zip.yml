@@ -28,35 +28,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      has-vtag: ${{ steps.get-version.outputs.HAS_VTAG }}
       release-version: ${{ steps.get-version.outputs.RELEASE_VERSION }}
     steps:
-      - name: 🏷️ Get and check version from v-tag
+      - name: 🏷️ Get version from v-tag
         id: get-version
         shell: pwsh
         run: |
-          if ($env:GITHUB_REF -match '^refs/tags/v') {
-            $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''
-            $version = $tagName -replace '^v', ''
-            Write-Host "Tag name: $tagName"
-            Write-Host "Release version: $version"
-            Write-Host "✅ Tag '$tagName' starts with 'v'"
-            # Output as workflow step variables.
-            "HAS_VTAG=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-            "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          } else {
-            $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''
-            Write-Host "❌ Tag '$tagName' does not start with 'v'"
-            Write-Host "GITHUB_REF: $env:GITHUB_REF"
-            Write-Output "::warning title=Skipping Workflow::Tag is not a valid v-tag. ($env:GITHUB_REF)"
-            # Output as workflow step variable.
-            "HAS_VTAG=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          }
+          $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''
+          $version = $tagName -replace '^v', ''
+          Write-Host "GITHUB_REF: $env:GITHUB_REF"
+          Write-Host "Tag name: $tagName"
+          Write-Host "Release version: $version"
+          # Output as workflow step variable.
+          "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
   build-publish-wpf-app-artifact-job:
     name: Build and publish WPF app artifact
     needs: get-version-job
-    if: needs.get-version-job.outputs.has-vtag == 'true'
     runs-on: windows-2022
     timeout-minutes: 20
     outputs:
@@ -106,7 +94,6 @@ jobs:
           "WPF_APP_ZIP_FILE_NAME=$zipFileName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
           "WPF_APP_ZIP_FILE_PATH=$zipFilePath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
 
       - name: 📦 dotnet publish WPF app artifacts
         shell: pwsh
