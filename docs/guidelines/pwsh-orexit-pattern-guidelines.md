@@ -43,7 +43,7 @@ if (someErrorWasDetected) {
 return $value
 ```
 
-## Unit Testing `OrExit` Functions with `-ThrowOnError
+## Unit Testing `OrExit` Functions with `-ThrowOnError`
 
 For unit testing error handling logic with an `OrExit` function or script, use the optional `-ThrowOnError` switch parameter, and assert on an exception thrown with the expected message.
 
