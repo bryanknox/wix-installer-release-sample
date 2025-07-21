@@ -26,9 +26,9 @@ for use in GitHub Actions workflow steps.
 
 - In workflow `.yml` file `shell: pwsh` steps, annotations can be written using the syntax in the following example. Note that `title` is optional.
   ```powershell
-  Write-Output "::error title=Setup Failed::Missing config file."
-  Write-Output "::warning::Validation API times-out."
-  Write-Output "::Notice title=Skipping workflow::No v-tag."
+  Write-Host "::error title=Setup Failed::Missing config file."
+  Write-Host "::warning::Validation API times-out."
+  Write-Host "::Notice title=Skipping workflow::No v-tag."
   ```
 
 ### Use `Write-GitHubAnnotation` in PowerShell files
