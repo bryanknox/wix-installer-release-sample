@@ -28,31 +28,10 @@ for use in GitHub Actions workflow steps.
   ```powershell
   Write-Host "::error title=Setup Failed::Missing config file."
   Write-Host "::warning::Validation API times-out."
-  Write-Host "::Notice title=Skipping workflow::No v-tag."
+  Write-Host "::notice title=Skipping workflow::No v-tag."
   ```
 
-### Use `Write-GitHubAnnotation` in PowerShell files
-
-- In PowerShell script and module files, use the custom `Write-GitHubAnnotation` function for logging error, warning, and notice annotations to GitHub workflow runs.
-
-  - See `.github\workflows\pwsh\Write-GitHubAnnotation.psm1`
-
-- The `Write-GitHubAnnotation` function should be mocked in unit tests so that no annotations are actually created when the tests are run within a GitHub workflow.
-
-Examples
-
-```powershell
-Write-GitHubAnnotation -Type error -Message "Missing config file."
-
-Write-GitHubAnnotation `
--Type warning `
--Title "Skipping validation" `
--Message "Validation API times-out."
-
-Write-GitHubAnnotation -Type notice -Message "Data loaded."
-```
-Note that the `-Title` parameter is optional.
-
+- Tests of functions and scripts that use any GitHub workflow commands (`::error`, `::warning`, or `::notice`) to output annotations, should mock `Write-Host` calls so that no annotations are actually created when the tests are run within a GitHub workflow.
 
 ## Script and Module Files
 
