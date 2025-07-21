@@ -100,11 +100,10 @@ jobs:
         run: |
           $semVer = "${{ needs.get-version-job.outputs.release-version }}"
           $buildNumber = $env:GITHUB_RUN_NUMBER
-          $semVersionDotZero  = ($semVer + ".0")
-          $semVersionDotBuildNumber= ($semVer + "." + $buildNumber)
+          $informationalVersion = "$semVer.$buildNumber"
 
-          Write-Host "semVersionDotZero: $semVersionDotZero"
-          Write-Host "semVersionDotBuildNumber: $semVersionDotBuildNumber"
+          Write-Host "Version: $semVer"
+          Write-Host "InformationalVersion: $informationalVersion"
 
           dotnet publish `
             $env:WPF_APP_CSPROJ_PATH `
@@ -113,10 +112,8 @@ jobs:
             --runtime $env:TARGET_RUNTIME `
             --output ${{ runner.temp }}/artifact-output `
             --verbosity minimal `
-            -p:Version=$semVersion `
-            -p:AssemblyVersion=$semVersionDotZero `
-            -p:FileVersion=$semVersionDotZero `
-            -p:InformationalVersion=$semVersionDotBuildNumber
+            -p:Version=$semVer `
+            -p:InformationalVersion=$informationalVersion
 
       - name: 📦 Create zip archive of WPF app
         shell: pwsh
