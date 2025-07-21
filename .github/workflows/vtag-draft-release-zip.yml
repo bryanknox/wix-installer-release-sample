@@ -117,7 +117,7 @@ jobs:
             -p:AssemblyVersion=$semVersionDotZero  `
             -p:FileVersion=$semVersionDotZero  `
             -p:InformationalVersion=$semVersionDotBuildNumber `
-            -p:IncludeSourceRevisionInInformationalVersion=false
+            -p:IncludeSourceRevisionInInformationalVersion=true
 
       - name: 📦 Create zip archive of WPF app
         shell: pwsh
