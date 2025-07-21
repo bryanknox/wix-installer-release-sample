@@ -56,7 +56,7 @@
     This script will fail if:
     - Auto-detection is used but no 'origin' remote is found or the remote
       URL is not a GitHub repository
-    - The user doesn't have permission to delete the releas
+    - The user doesn't have permission to delete the release
 
    This script will attempt to delete each of the following, and output
    warnings for any failures:
