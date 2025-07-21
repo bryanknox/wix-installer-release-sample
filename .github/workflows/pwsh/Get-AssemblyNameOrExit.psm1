@@ -108,7 +108,7 @@ function Get-AssemblyNameOrExit {
                 -ErrorMessage "No explicit AssemblyName found in project file '$ProjectPath' and unable to determine project name from filename."
         }
 
-        $message= "No explicit AssemblyName found, using project filename: $projectFileName"
+        $message = "No explicit AssemblyName found, using project filename: $projectFileName"
 
         Write-Host "::notice title=Using Project Name as AssemblyName::$message"
 
