@@ -114,28 +114,11 @@ jobs:
           Compress-Archive -Path "$artifactPath\*" -DestinationPath $zipPath -Force
           Write-Host "Created zip archive: $zipPath"
 
-      - name: 🔒 Generate checksums (for zip file)
-        shell: pwsh
-        run: |
-          $zipPath = "${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_PATH }}"
-          $externalChecksumsPath = "${{ runner.temp }}/checksums.txt"
-          $hash = Get-FileHash -Path $zipPath -Algorithm SHA256
-          "$($hash.Hash)  $(Split-Path $zipPath -Leaf)" | Out-File -FilePath $externalChecksumsPath -Encoding UTF8
-          Write-Host "Generated checksums (for zip file):"
-          Get-Content $externalChecksumsPath
-
       - name: 📤 Upload WPF app zip to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ARTIFACT_NAME }}
           path: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_PATH }}
-          retention-days: 7
-
-      - name: 📤 Upload checksums to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: checksums
-          path: ${{ runner.temp }}/checksums.txt
           retention-days: 7
 
   draft-release-wpf-app-job:
@@ -157,12 +140,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-artifact-name }}
-          path: ${{ runner.temp }}/dist
-
-      - name: 📥 Download checksums artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: checksums
           path: ${{ runner.temp }}/dist
 
       - name: 📝 Generate release notes
@@ -190,13 +167,12 @@ jobs:
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("### Download")
           [void]$sb.AppendLine("- **Windows (x64)**: Download the zip file from the assets below")
-          [void]$sb.AppendLine("- **Checksums**: SHA256 checksums are provided for security:")
-          [void]$sb.AppendLine("  - **checksums.txt**: Contains the checksum for the zip file itself")
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("### Verification")
-          [void]$sb.AppendLine("1. Download both the zip file and checksums.txt")
-          [void]$sb.AppendLine("2. Verify the zip file integrity: ``Get-FileHash $artifactZipName -Algorithm SHA256``")
-          [void]$sb.AppendLine("3. Compare with the hash in checksums.txt")
+          [void]$sb.AppendLine("1. Download the ``$artifactZipName`` file from the GitHub release assets")
+          [void]$sb.AppendLine("2. Copy the SHA256 for the ``$artifactZipName`` file from the GitHub release assets")
+          [void]$sb.AppendLine("3. Verify the zip file integrity: ``Get-FileHash $artifactZipName -Algorithm SHA256``")
+          [void]$sb.AppendLine("4. Compare with the hash returned with the SHA256 from GitHub")
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("### Installation")
           [void]$sb.AppendLine("1. Download and verify the zip file (see Verification above)")
