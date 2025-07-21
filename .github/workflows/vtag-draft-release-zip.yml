@@ -104,7 +104,7 @@ jobs:
           $semVersionDotBuildNumber = "$semVersion.$buildNumber"
 
           Write-Host "semVersionDotZero: $semVersionDotZero"
-          Write-Host "InformationalVersion: $semVersionDotBuildNumber"
+          Write-Host "semVersionDotBuildNumber: $semVersionDotBuildNumber"
 
           dotnet publish `
             $env:WPF_APP_CSPROJ_PATH `
@@ -116,7 +116,8 @@ jobs:
             -p:Version=$semVersion `
             -p:AssemblyVersion=$semVersionDotZero  `
             -p:FileVersion=$semVersionDotZero  `
-            -p:InformationalVersion=$semVersionDotBuildNumber
+            -p:InformationalVersion=$semVersionDotBuildNumber `
+            -p:IncludeSourceRevisionInInformationalVersion=false
 
       - name: 📦 Create zip archive of WPF app
         shell: pwsh
