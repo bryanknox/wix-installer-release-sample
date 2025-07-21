@@ -39,7 +39,7 @@ for use in GitHub Actions workflow steps.
   - One script per `.ps1` file.
 
 - Put PowerShell functions in `.psm1` module files.
-  - One function per `.psm1` module files.
+  - One function per `.psm1` module file.
 
 ## Line-wrap PowerShell for readability
 
