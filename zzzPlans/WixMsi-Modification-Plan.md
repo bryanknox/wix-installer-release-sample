@@ -72,6 +72,7 @@ Modify the existing WiX 6 installer project to build a parameterized MSI install
   <Feature Id="MainApplication" Title="$(ProductName)" Level="1">
     <ComponentGroupRef Id="AppComponents" />
     <ComponentGroupRef Id="RuntimeComponents" />
+    <ComponentGroupRef Id="SubDirectoryComponents" />
   </Feature>
 
   <Feature Id="Shortcuts" Title="Shortcuts" Level="1">
@@ -129,23 +130,19 @@ The `RuntimeComponents.wxs` file will be **automatically generated** at build ti
 </ComponentGroup>
 ```
 
-**3.3 Localized Resources (Generated Files):**
-The localized component files will be **automatically generated** for each language subfolder found in the published output.
+**3.3 Subdirectory Content (Handled by SubDirectoryComponents.wxs):**
+All subdirectory content (language resources, plugins, assets, etc.) will be **automatically included** by the `SubDirectoryComponents.wxs` file using WiX 6 Files elements.
 
-**Example generated structure:**
-```xml
-<ComponentGroup Id="LocalizedComponents_cs">
-  <Component Id="cmp_cs_resource1" Directory="cs_DIR">
-    <File Source="$(var.PublishedFilesPath)\cs\resource1.dll" />
-  </Component>
-  <!-- ... other Czech resources ... -->
-</ComponentGroup>
-```
+**Example of what gets automatically included:**
+- Language directories: `cs\*.resources.dll`, `pt-BR\*.resources.dll`
+- Plugin directories: `plugins\**`
+- Asset directories: `themes\**`, `assets\**`
+- Any future subdirectories that .NET or applications might introduce
 
 ### 4. Enhanced Folder Structure (`Folders.wxs`)
 
 **Changes Required:**
-- Add directories for localized resources
+- Simplify directory structure since localized resources are handled dynamically
 - Include shortcuts directories
 - Better organization of install locations
 
@@ -154,11 +151,12 @@ The localized component files will be **automatically generated** for each langu
 <Fragment>
   <StandardDirectory Id="ProgramFiles6432Folder">
     <Directory Id="INSTALLFOLDER" Name="!(bind.Property.Manufacturer) !(bind.Property.ProductName)">
-      <!-- Localized resource subdirectories -->
-      <Directory Id="cs_DIR" Name="cs" />
-      <Directory Id="de_DIR" Name="de" />
-      <Directory Id="es_DIR" Name="es" />
-      <!-- ... other language directories ... -->
+      <!--
+        Note: Language subdirectories are now created automatically by the
+        Files elements in LocalizedComponents.wxs using the Subdirectory="*" attribute.
+        No need to pre-define language directories since we don't know which
+        languages will be present in any given build.
+      -->
     </Directory>
   </StandardDirectory>
 
@@ -169,6 +167,12 @@ The localized component files will be **automatically generated** for each langu
   </StandardDirectory>
 </Fragment>
 ```
+
+**Benefits of Dynamic Directory Creation:**
+1. **Automatic Adaptation**: Installer adapts to whatever language directories are present
+2. **No Maintenance**: No need to update directory definitions when languages change
+3. **Clean Structure**: Only creates directories for languages that actually exist
+4. **Future-Proof**: Works with any culture codes that .NET might introduce
 
 ### 5. Shortcuts and User Experience (New File)
 
@@ -250,86 +254,151 @@ $buildArgs = @(
 dotnet @buildArgs
 ```
 
-### 8. Dynamic Component Generation Strategy
+### 8. Dynamic Component Generation Strategy - Using WiX 6 Files Elements
 
 **Problem:** The published files may vary between builds, so static component files won't work.
 
-**Solution Options:**
+**Recommended Solution: WiX 6 Files Elements (Replaces Deprecated Heat Tool)**
 
-**Option A: HeatWave Community Edition (Recommended for Visual Studio)**
-- Use HeatWave's harvesting capabilities to auto-generate component files at build time
-- Configure HeatWave to scan the `$(PublishedFilesPath)` folder and generate component groups
-- Set up templates for consistent component generation patterns
-- Enable automatic GUID generation for components
+WiX 6 introduces native Files elements that provide powerful file harvesting capabilities without requiring external tools. This approach is simpler, more reliable, and integrates seamlessly with the build process.
 
-**Option B: WiX Heat Tool (Command Line)**
-- Use the WiX Heat tool to generate component files as part of the build process
-- Add MSBuild targets to run Heat before the WiX compilation
-- Generate separate .wxs files for different file categories
+**Key Advantages:**
+- No external tool dependencies (Heat tool is deprecated)
+- Native WiX 6 feature with full MSBuild integration
+- Supports complex wildcard patterns and exclusion filters
+- Automatically handles component generation and GUID assignment
+- Built-in support for bind paths and preprocessor variables
 
-**Option C: Custom MSBuild Target with Heat**
-- Create MSBuild targets that run Heat to generate component files dynamically
-- Integrate into the WixMsi.wixproj build process
-- Generate files into intermediate directory before WiX compilation
+**Implementation Approach:**
 
-**Recommended Implementation (Option C):**
+Instead of generating separate `.wxs` files, we'll use the Files elements directly in our WiX source files with parameterized paths and wildcard patterns.
 
-Add to `WixMsi.wixproj`:
+**Create `RuntimeComponents.wxs`:**
 ```xml
-<PropertyGroup>
-  <!-- Heat tool configuration -->
-  <HeatToolPath Condition="'$(HeatToolPath)' == ''">$(WixToolPath)heat.exe</HeatToolPath>
-  <GeneratedComponentsDir>$(IntermediateOutputPath)Generated</GeneratedComponentsDir>
-</PropertyGroup>
-
-<Target Name="GenerateComponents" BeforeTargets="Build">
-  <!-- Create directory for generated files -->
-  <MakeDir Directories="$(GeneratedComponentsDir)" />
-
-  <!-- Generate runtime components -->
-  <Exec Command='$(HeatToolPath) dir "$(PublishedFilesPath)" -cg RuntimeComponents -gg -scom -sreg -sfrag -srd -dr INSTALLFOLDER -out "$(GeneratedComponentsDir)\RuntimeComponents.wxs" -var var.PublishedFilesPath' />
-
-  <!-- Generate localized components for each language subfolder -->
-  <ItemGroup>
-    <LanguageDirs Include="$(PublishedFilesPath)\*" Condition="$([System.IO.Directory]::Exists('%(FullPath)'))" />
-  </ItemGroup>
-
-  <Exec Command='$(HeatToolPath) dir "%(LanguageDirs.FullPath)" -cg LocalizedComponents_%(LanguageDirs.Filename) -gg -scom -sreg -sfrag -srd -dr %(LanguageDirs.Filename)_DIR -out "$(GeneratedComponentsDir)\LocalizedComponents_%(LanguageDirs.Filename).wxs" -var var.PublishedFilesPath'
-        Condition="@(LanguageDirs->Count()) > 0" />
-</Target>
-
-<ItemGroup>
-  <!-- Include generated component files -->
-  <Compile Include="$(GeneratedComponentsDir)\*.wxs" />
-</ItemGroup>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <ComponentGroup Id="RuntimeComponents" Directory="INSTALLFOLDER">
+      <!-- Harvest all runtime files except core application files -->
+      <Files Include="$(var.PublishedFilesPath)\**"
+             Exclude="$(var.PublishedFilesPath)\SampleWpfApp.exe;$(var.PublishedFilesPath)\SampleWpfApp.dll;$(var.PublishedFilesPath)\SampleWpfApp.deps.json;$(var.PublishedFilesPath)\SampleWpfApp.runtimeconfig.json">
+        <!-- Exclude debug symbols unless specified -->
+        <Exclude Files="$(var.PublishedFilesPath)\**.pdb"
+                 Condition="'$(IncludeDebugSymbols)' != 'true'" />
+        <!-- Exclude XML documentation files -->
+        <Exclude Files="$(var.PublishedFilesPath)\**.xml" />
+      </Files>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
 ```
 
-**HeatWave Configuration (if using Option A):**
-- Configure auto-harvesting of the `$(PublishedFilesPath)` folder
-- Set up component grouping by file type (runtime, framework, application)
-- Configure exclude patterns for files that shouldn't be included (like .pdb files unless debug build)
+**Create `SubDirectoryComponents.wxs`:**
+
+**Comprehensive Subdirectory Handling (Simplified Approach):**
+
+Instead of trying to distinguish between language and non-language folders, this approach simply includes all subdirectories and their contents, letting WiX handle the organization automatically.
+
+```xml
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <ComponentGroup Id="SubDirectoryComponents" Directory="INSTALLFOLDER">
+      <!-- Include all files in all subdirectories -->
+      <Files Include="$(var.PublishedFilesPath)\*\**" Subdirectory="*">
+        <!-- Exclude only the problematic .NET runtime directories that we know cause issues -->
+        <Exclude Files="$(var.PublishedFilesPath)\runtimes\**" />
+        <Exclude Files="$(var.PublishedFilesPath)\refs\**" />
+        <Exclude Files="$(var.PublishedFilesPath)\shared\**" />
+
+        <!-- This will automatically include:
+             - Language directories (cs, de, pt-BR, zh-Hans, etc.) with .resources.dll files
+             - Future plugin/module directories with any file types
+             - Asset directories with images, data, or other content
+             - Any other subdirectories that applications or .NET might introduce
+        -->
+      </Files>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
+```
+
+**Key Advantages of This Simplified Approach:**
+
+1. **Maximum Simplicity**: One component group handles everything
+2. **Future-Proof**: Automatically adapts to any new subdirectory types
+3. **Zero Maintenance**: No need to update exclusion lists for new content types
+4. **Comprehensive**: Nothing gets missed - all subdirectories and their contents are included
+5. **Clean Architecture**: Lets WiX handle the complexity of subdirectory organization
+6. **Minimal Exclusions**: Only excludes the few known problematic .NET runtime directories
+
+**How This Handles All Scenarios:**
+
+- ✅ **Language Directories**: `cs\*.resources.dll`, `pt-BR\*.resources.dll` - automatically included
+- ✅ **Plugin Directories**: `plugins\**` - automatically included
+- ✅ **Asset Directories**: `assets\**`, `themes\**` - automatically included
+- ✅ **Future .NET Features**: Any new subdirectories - automatically included
+- ✅ **Application Features**: Module systems, extensions - automatically included
+
+**Runtime Directory Exclusions Explained:**
+- `runtimes\**` - Contains platform-specific native libraries that could conflict
+- `refs\**` - Reference assemblies not needed at runtime
+- `shared\**` - Shared framework files that might cause conflicts
+
+**Update WixMsi.wixproj:**
+```xml
+<Project Sdk="WixToolset.Sdk/6.0.1">
+  <PropertyGroup>
+    <!-- Default values for parameterization -->
+    <PublishedFilesPath Condition="'$(PublishedFilesPath)' == ''">$(MSBuildProjectDirectory)\..\local-published\SampleWpfApp-output</PublishedFilesPath>
+    <IncludeDebugSymbols Condition="'$(IncludeDebugSymbols)' == ''">false</IncludeDebugSymbols>
+    <CreateDesktopShortcut Condition="'$(CreateDesktopShortcut)' == ''">true</CreateDesktopShortcut>
+    <CreateStartMenuShortcut Condition="'$(CreateStartMenuShortcut)' == ''">true</CreateStartMenuShortcut>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\SampleWpfApp\SampleWpfApp.csproj" />
+  </ItemGroup>
+
+  <!-- Define bind path for published files -->
+  <PropertyGroup>
+    <WixVariable Include="PublishedFilesPath">
+      <Value>$(PublishedFilesPath)</Value>
+    </WixVariable>
+  </PropertyGroup>
+</Project>
+```
+
+**Benefits of This Approach:**
+1. **No External Dependencies:** Uses native WiX 6 functionality
+2. **Reliable:** No risk of Heat tool failures or version compatibility issues
+3. **Parameterized:** Supports different build scenarios through MSBuild properties
+4. **Maintainable:** Clear, readable WiX source code
+5. **Flexible:** Easy to add exclusion patterns or modify harvesting rules
+6. **Performance:** No pre-build file generation step required
 
 ### 9. File Organization Summary
 
 **Static Files (manually maintained):**
-1. `WixMsi.wixproj` - Enhanced with parameterization and Heat integration
+1. `WixMsi.wixproj` - Enhanced with parameterization and bind path configuration
 2. `Package.wxs` - Parameterized package definition
 3. `AppComponents.wxs` - Core application components only (4 main files)
-4. `Shortcuts.wxs` - **NEW** - Desktop and Start Menu shortcuts
-5. `Folders.wxs` - Enhanced folder structure with language directories
-6. `Package.en-us.wxl` - Enhanced localization
-7. `BuildMsi.ps1` - **NEW** - Build script for parameterized builds
+4. `RuntimeComponents.wxs` - **NEW** - Uses Files elements to harvest .NET runtime files
+5. `SubDirectoryComponents.wxs` - **NEW** - Uses Files elements to harvest all subdirectory content
+6. `Shortcuts.wxs` - **NEW** - Desktop and Start Menu shortcuts
+7. `Folders.wxs` - Simplified folder structure (subdirectories created dynamically)
+8. `Package.en-us.wxl` - Enhanced localization
+9. `BuildMsi.ps1` - **NEW** - Build script for parameterized builds
 
-**Dynamic Files (generated at build time):**
-8. `RuntimeComponents.wxs` - **GENERATED** - All .NET runtime and framework files
-9. `LocalizedComponents_[lang].wxs` - **GENERATED** - Localized resource files per language
-10. `obj\Generated\*.wxs` - Other generated component files as needed
-
-**File Generation Process:**
-1. MSBuild target runs Heat tool before WiX compilation
-2. Heat scans `$(PublishedFilesPath)` and generates component files
-3. Generated files are included in the WiX compilation automatically
-4. Final MSI includes all discovered files from the published output
+**Benefits of Using WiX 6 Files Elements with Comprehensive Subdirectory Inclusion:**
+1. **Native Integration:** No external tool dependencies
+2. **Parameterization:** Full support for MSBuild properties and bind paths
+3. **Comprehensive:** Automatically includes all published files
+4. **Maintainable:** Clear, readable source code without generated files
+5. **Flexible:** Easy to add exclusion patterns and custom filtering
+6. **Professional:** Proper component organization and GUID management
+7. **Scalable:** Easy to extend with additional file categories
+8. **Universal:** Handles all subdirectory types without classification
+9. **Future-Proof:** Adapts to any new subdirectory content without code changes
+10. **Simplified:** Single approach handles all scenarios
 
 ### 10. Usage Scenarios
 
@@ -354,19 +423,24 @@ cd WixMsi
 
 ### 11. Benefits of This Approach
 
-1. **Parameterization**: Supports both local and CI/CD scenarios
-2. **Comprehensive**: Includes all published application files
-3. **Maintainable**: Organized component structure
-4. **Flexible**: Configurable features and shortcuts
-5. **Professional**: Proper upgrade handling and user experience
-6. **Scalable**: Easy to extend with additional features
+1. **Modern WiX 6 Native Solution**: Uses the latest WiX 6 Files elements instead of deprecated Heat tool
+2. **Parameterization**: Supports both local and CI/CD scenarios through MSBuild properties
+3. **Comprehensive**: Includes all published application files through wildcard patterns
+4. **Maintainable**: Organized component structure with clear source files
+5. **Flexible**: Configurable features and shortcuts with conditional compilation
+6. **Professional**: Proper upgrade handling and user experience
+7. **Scalable**: Easy to extend with additional features and file categories
+8. **Reliable**: No external tool dependencies that could break the build
+9. **Performance**: No pre-build file generation steps required
 
 ### 12. Implementation Priority
 
-1. **Phase 1**: Update project file with parameterization and Heat integration targets
-2. **Phase 2**: Update Package.wxs with parameterized values and dynamic component references
+1. **Phase 1**: Update project file with parameterization and bind path configuration
+2. **Phase 2**: Update Package.wxs with parameterized values and component group references
 3. **Phase 3**: Create static AppComponents.wxs and Shortcuts.wxs files
-4. **Phase 4**: Set up Heat tool integration and test dynamic component generation
+4. **Phase 4**: Create RuntimeComponents.wxs and LocalizedComponents.wxs using Files elements
+5. **Phase 5**: Test file harvesting patterns and refine exclusion filters
+6. **Phase 6**: Create build script and test parameterized builds
 5. **Phase 5**: Create build scripts and validate both local and CI/CD scenarios
 
 **Key Success Criteria:**
