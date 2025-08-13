@@ -1,0 +1,156 @@
+#!/usr/bin/env pwsh
+<#
+.SYNOPSIS
+Publishes the SampleWpfApp and builds the WiX MSI installer in one step.
+
+.DESCRIPTION
+This script combines the functionality of PublishLocalSampleWpfApp.ps1 and BuildWixMsi.ps1
+to provide a complete build pipeline from source code to MSI installer. It publishes the
+WPF application and then builds the MSI installer that includes all published files.
+
+.PARAMETER Version
+The version number in semantic version format (e.g., "1.2.3").
+
+.PARAMETER ProductName
+The name of the product to be displayed in the installer. Defaults to "Sample WPF App".
+
+.PARAMETER Manufacturer
+The manufacturer name to be displayed in the installer. Defaults to "Bryan Knox".
+
+.PARAMETER Configuration
+The build configuration to use. Defaults to "Release".
+
+.PARAMETER Platform
+The target platform for the MSI. Defaults to "x64".
+
+.PARAMETER SkipPublish
+If specified, skips the publishing step and only builds the MSI installer.
+Useful when the application has already been published.
+
+.EXAMPLE
+.\PublishAndBuildMsi.ps1 -Version "1.2.3"
+
+.EXAMPLE
+.\PublishAndBuildMsi.ps1 -Version "1.0.0" -ProductName "My WPF App" -Manufacturer "My Company"
+
+.EXAMPLE
+.\PublishAndBuildMsi.ps1 -Version "2.1.0" -SkipPublish
+#>
+
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true, Position = 0)]
+    [ValidatePattern('^\d+\.\d+\.\d+$')]
+    [string]$Version,
+
+    [Parameter(Mandatory = $false)]
+    [string]$ProductName = "Sample WPF App",
+
+    [Parameter(Mandatory = $false)]
+    [string]$Manufacturer = "Bryan Knox",
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("Debug", "Release")]
+    [string]$Configuration = "Release",
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("x86", "x64", "ARM64")]
+    [string]$Platform = "x64",
+
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipPublish
+)
+
+# Set error action preference
+$ErrorActionPreference = 'Stop'
+
+# Define script paths
+$PUBLISH_SCRIPT = 'scripts\PublishLocalSampleWpfApp.ps1'
+$BUILD_MSI_SCRIPT = 'scripts\BuildWixMsi.ps1'
+
+try {
+    Write-Host "🚀 Starting complete build pipeline for $ProductName v$Version" -ForegroundColor Green
+
+    # Validate that we're in the correct directory (check for solution file)
+    $solutionFile = 'SampleWpfApp.sln'
+    if (-not (Test-Path $solutionFile)) {
+        throw "Solution file '$solutionFile' not found. Please run this script from the repository root."
+    }
+
+    # Validate that required scripts exist
+    if (-not (Test-Path $PUBLISH_SCRIPT)) {
+        throw "Publish script '$PUBLISH_SCRIPT' not found."
+    }
+
+    if (-not (Test-Path $BUILD_MSI_SCRIPT)) {
+        throw "Build MSI script '$BUILD_MSI_SCRIPT' not found."
+    }
+
+    Write-Host "📋 Pipeline configuration:" -ForegroundColor Cyan
+    Write-Host "  - Product Name: $ProductName"
+    Write-Host "  - Manufacturer: $Manufacturer"
+    Write-Host "  - Version: $Version"
+    Write-Host "  - Configuration: $Configuration"
+    Write-Host "  - Platform: $Platform"
+    Write-Host "  - Skip Publish: $SkipPublish"
+
+    # Step 1: Publish the WPF application (unless skipped)
+    if (-not $SkipPublish) {
+        Write-Host ""
+        Write-Host "📦 Step 1: Publishing WPF application..." -ForegroundColor Yellow
+
+        & $PUBLISH_SCRIPT -Version $Version
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Application publish failed with exit code $LASTEXITCODE"
+        }
+
+        Write-Host "✅ Application published successfully!" -ForegroundColor Green
+    } else {
+        Write-Host ""
+        Write-Host "⏭️  Step 1: Skipping application publish (as requested)" -ForegroundColor Yellow
+    }
+
+    # Step 2: Build the MSI installer
+    Write-Host ""
+    Write-Host "📦 Step 2: Building MSI installer..." -ForegroundColor Yellow
+
+    & $BUILD_MSI_SCRIPT -Version $Version -ProductName $ProductName -Manufacturer $Manufacturer -Configuration $Configuration -Platform $Platform
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "MSI build failed with exit code $LASTEXITCODE"
+    }
+
+    Write-Host "✅ MSI installer built successfully!" -ForegroundColor Green
+
+    # Display final summary
+    Write-Host ""
+    Write-Host "🎉 Complete build pipeline finished successfully!" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "📂 Output locations:" -ForegroundColor Cyan
+    Write-Host "  - Published app: local-published\SampleWpfApp-output\" -ForegroundColor Gray
+    Write-Host "  - MSI installer: WixMsi\bin\$Platform\$Configuration\en-US\" -ForegroundColor Gray
+
+    # Find and display the MSI file details
+    $msiPattern = "WixMsi\bin\$Platform\$Configuration\en-US\*.msi"
+    $msiFiles = Get-ChildItem $msiPattern -ErrorAction SilentlyContinue
+
+    if ($msiFiles) {
+        $msiFile = $msiFiles[0]
+        Write-Host ""
+        Write-Host "📄 Final MSI installer: $($msiFile.Name)" -ForegroundColor White
+        Write-Host "   Size: $([math]::Round($msiFile.Length / 1MB, 2)) MB" -ForegroundColor Gray
+        Write-Host "   Path: $($msiFile.FullName)" -ForegroundColor Gray
+
+        Write-Host ""
+        Write-Host "✨ To install the application, run:" -ForegroundColor Yellow
+        Write-Host "   msiexec /i `"$($msiFile.FullName)`"" -ForegroundColor White
+    }
+
+}
+catch {
+    Write-Host ""
+    Write-Host "❌ Error during build pipeline: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Red
+    exit 1
+}

@@ -4,21 +4,10 @@
       Id="AppComponents"
       Directory="INSTALLFOLDER">
 
-      <Component>
-        <File Source="SampleWpfApp.exe" />
-      </Component>
-
-      <Component>
-        <File Source="SampleWpfApp.deps.json" />
-      </Component>
-
-      <Component>
-        <File Source="SampleWpfApp.dll" />
-      </Component>
-
-      <Component>
-        <File Source="SampleWpfApp.runtimeconfig.json" />
-      </Component>
+      <!-- Use Files element to harvest all files from the published output folder -->
+      <Files
+        Include="$(var.PublishedFilesPath)\**"
+        Directory="INSTALLFOLDER" />
 
     </ComponentGroup>
   </Fragment>

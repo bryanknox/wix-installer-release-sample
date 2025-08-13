@@ -1,9 +1,9 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package
     Id="bryanknox.SampleWpfAppWixMsiPackage"
-    Name="Sample WPF App"
-    Manufacturer="Bryan Knox"
-    Version="1.0.0.0">
+    Name="$(var.ProductName)"
+    Manufacturer="$(var.Manufacturer)"
+    Version="$(var.PackageVersion)">
 
     <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
 
