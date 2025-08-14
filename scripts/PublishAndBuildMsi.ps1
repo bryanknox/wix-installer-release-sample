@@ -21,7 +21,7 @@ The manufacturer name to be displayed in the installer. Defaults to "Bryan Knox"
 The build configuration to use. Defaults to "Release".
 
 .PARAMETER Platform
-The target platform for the MSI. Defaults to "x64".
+The target platform for the MSI. Defaults to "x64" (the only platform currently supported).
 
 .PARAMETER SkipPublish
 If specified, skips the publishing step and only builds the MSI installer.
@@ -54,7 +54,7 @@ param(
     [string]$Configuration = "Release",
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet("x86", "x64", "ARM64")]
+    [ValidateSet("x64")]
     [string]$Platform = "x64",
 
     [Parameter(Mandatory = $false)]

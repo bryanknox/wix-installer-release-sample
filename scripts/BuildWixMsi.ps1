@@ -6,7 +6,8 @@ Builds the WiX MSI installer for the SampleWpfApp.
 .DESCRIPTION
 This script builds the WiX MSI installer using the parameterized project. It accepts
 version information and other properties that can be passed to the WiX build process.
-The script assumes that the application has already been published using PublishLocalSampleWpfApp.ps1.
+The script assumes that the application has already been published and are located in
+the directory indicated by the PublishedFilesPath parameter.
 
 .PARAMETER Version
 The version number in semantic version format (e.g., "1.2.3"). This will be converted
@@ -25,7 +26,7 @@ The path to the published application files. Defaults to "../local-published/Sam
 The build configuration to use. Defaults to "Release".
 
 .PARAMETER Platform
-The target platform. Defaults to "x64".
+The target platform. Defaults to "x64" (the only platform currently supported).
 
 .EXAMPLE
 .\BuildWixMsi.ps1 -Version "1.2.3"
@@ -57,7 +58,7 @@ param(
     [string]$Configuration = "Release",
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet("x86", "x64", "ARM64")]
+    [ValidateSet("x64")]
     [string]$Platform = "x64"
 )
 

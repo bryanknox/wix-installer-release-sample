@@ -4,11 +4,10 @@ This directory contains a WiX 6 installer project that creates an MSI installer 
 
 ## Overview
 
-The WiX installer project uses the modern WiX 6 Toolset with HeatWave Community Edition features:
+The WiX installer project uses the WiX 6 Toolset with HeatWave Community Edition features:
 
 - **File Harvesting**: Uses the `Files` element to automatically harvest all files from the published application output
 - **Parameterization**: Supports configurable product name, manufacturer, version, and file paths
-- **Modern WiX 6**: Built with WiX 6 Toolset and HeatWave Community Edition (no deprecated Heat tool)
 
 ## Project Structure
 
@@ -22,18 +21,9 @@ The WiX installer project uses the modern WiX 6 Toolset with HeatWave Community 
 
 ### File Harvesting with `Files` Element
 
-The installer uses the WiX 6 `Files` element to automatically harvest all files from the published application output:
+The installer uses the WiX 6 `Files` element to automatically harvest all files in the published application directory.
 
-```xml
-<Files
-  Include="!(bindpath.PublishedFiles)\**"
-  Directory="INSTALLFOLDER" />
-```
-
-This approach:
-- Automatically includes all files from the published output
-- No need to manually maintain file lists
-- Uses bind paths for flexible source location configuration
+See [Files Element Documentation](https://docs.firegiant.com/wix/schema/wxs/files/) in the WiX Core docs.
 
 ### Parameterization
 
@@ -51,16 +41,17 @@ The installer supports the following parameters:
 ### Prerequisites
 
 1. Install WiX 6 Toolset
-2. Ensure the application has been published using `PublishLocalSampleWpfApp.ps1`
+   - `dotnet tool install --global wix --version 6.0.0`
+1. Ensure the application has been published to the directory specified by the `PublishedFilesPath` parameter.
 
 ### Building the MSI Installer
 
-#### Option 1: Using the Build Script (Recommended)
+#### Option 1: Using a PowerShell Build Script (Recommended)
 
 Use the provided PowerShell scripts for an automated build process:
 
 ```powershell
-# Build both the application and MSI installer
+# Build & publish the application and build the MSI
 .\scripts\PublishAndBuildMsi.ps1 -Version "1.2.3"
 
 # Build with custom product information
@@ -105,7 +96,9 @@ For example: `WixMsi\bin\x64\Release\en-US\WixMsi.msi`
 
 ## GitHub Actions Integration
 
-The parameterized design makes it easy to integrate with CI/CD pipelines. Example GitHub Actions usage:
+The parameterized design makes it easy to integrate with CI/CD pipelines.
+
+Example GitHub Actions usage:
 
 ```yaml
 - name: Build MSI Installer
@@ -121,14 +114,6 @@ The parameterized design makes it easy to integrate with CI/CD pipelines. Exampl
 
 ## Development Notes
 
-### File Binding
-
-The project uses WiX bind paths to reference the published files:
-
-- `PublishedFiles` bind path points to the published application output
-- Configured via `WixBindPath` in the project file
-- Allows flexible source location without hardcoded paths
-
 ### Version Handling
 
 - The installer expects a 4-part version number (e.g., "1.2.3.0")
@@ -137,7 +122,7 @@ The project uses WiX bind paths to reference the published files:
 
 ### Localization
 
-- Currently supports English (en-US) localization
+- Currently supports US English (en-US) localization
 - Localization strings are defined in `Package.en-us.wxl`
 - Additional languages can be added by creating additional `.wxl` files
 
@@ -150,7 +135,7 @@ The project uses WiX bind paths to reference the published files:
    - Verify the `PublishedFilesPath` parameter points to the correct location
 
 2. **"WiX toolset not found"**
-   - Install WiX 6 Toolset: `dotnet tool install --global wix`
+   - Install WiX 6 Toolset: `dotnet tool install --global wix --version 6.0.0`
    - Ensure WiX is available in your PATH
 
 3. **"Bind path not resolved"**
@@ -167,6 +152,5 @@ dotnet build WixMsi\WixMsi.wixproj --verbosity detailed
 
 ## Additional Resources
 
-- [WiX 6 Documentation](https://docs.firegiant.com/)
-- [Files Element Documentation](https://docs.firegiant.com/wix/schema/wxs/files/)
-- [WiX 6 Migration Guide](https://docs.firegiant.com/migration/)
+- [WiX Toolset Documentation](https://docs.firegiant.com/wix/)
+
