@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\SampleWpfApp\SampleWpfApp.csproj" />
+    <!-- Add WiX UI extension for folder selection dialog -->
+    <PackageReference Include="WixToolset.UI.wixext" Version="6.0.1" />
   </ItemGroup>
 
 </Project>
