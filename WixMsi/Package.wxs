@@ -3,7 +3,8 @@
     Id="bryanknox.SampleWpfAppWixMsiPackage"
     Name="$(var.ProductName)"
     Manufacturer="$(var.Manufacturer)"
-    Version="$(var.PackageVersion)">
+    Version="$(var.PackageVersion)"
+    Scope="perUser">
 
     <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
 

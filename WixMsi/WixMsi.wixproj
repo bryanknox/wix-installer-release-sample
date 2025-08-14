@@ -16,6 +16,8 @@
       PackageVersion=$(PackageVersion);
       PublishedFilesPath=$(PublishedFilesPath)
     </DefineConstants>
+    <!-- Suppress ICE validations that are problematic for per-user installations with auto-harvested files -->
+    <SuppressIces>ICE38;ICE64;ICE91</SuppressIces>
   </PropertyGroup>
 
   <ItemGroup>
