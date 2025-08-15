@@ -9,6 +9,8 @@
 
     <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
 
+    <MediaTemplate EmbedCab="true" />
+
     <Feature Id="Main">
       <ComponentGroupRef Id="AppComponents" />
     </Feature>
