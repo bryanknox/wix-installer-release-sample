@@ -6,6 +6,7 @@
     <Manufacturer Condition="'$(Manufacturer)' == ''">Bryan Knox</Manufacturer>
     <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0.0</PackageVersion>
     <PublishedFilesPath Condition="'$(PublishedFilesPath)' == ''">$(MSBuildProjectDirectory)\..\local-published\SampleWpfApp-output</PublishedFilesPath>
+    <MainExecutableFileName Condition="'$(MainExecutableFileName)' == ''">SampleWpfApp.exe</MainExecutableFileName>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -14,7 +15,8 @@
       ProductName=$(ProductName);
       Manufacturer=$(Manufacturer);
       PackageVersion=$(PackageVersion);
-      PublishedFilesPath=$(PublishedFilesPath)
+      PublishedFilesPath=$(PublishedFilesPath);
+      MainExecutableFileName=$(MainExecutableFileName)
     </DefineConstants>
     <!-- Suppress ICE validations that are problematic for per-user installations with auto-harvested files -->
     <SuppressIces>ICE38;ICE64;ICE91</SuppressIces>

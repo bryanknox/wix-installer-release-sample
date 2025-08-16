@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Fragment>
     <DirectoryRef Id="ApplicationProgramsFolder">
@@ -5,7 +7,8 @@
         <Shortcut Id="StartMenuLink"
                   Name="!(bind.Property.ProductName)"
                   Description="Launch !(bind.Property.ProductName)"
-                  Target="[INSTALLFOLDER]SampleWpfApp.exe"
+                  Target="[INSTALLFOLDER]$(var.MainExecutableFileName)"
+                  Advertise="no"
                   WorkingDirectory="INSTALLFOLDER" />
         <RemoveFolder Id="CleanupStartMenu" Directory="ApplicationProgramsFolder" On="uninstall" />
         <RegistryValue Root="HKCU"
