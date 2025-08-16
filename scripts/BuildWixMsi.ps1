@@ -98,7 +98,7 @@ try {
     }
 
     if (-not $absolutePublishedFilesPath -or -not (Test-Path $absolutePublishedFilesPath)) {
-        throw "Published files path '$PublishedFilesPath' not found. Please run PublishLocalSampleWpfApp.ps1 first."
+        throw "PublishedFilesPath '$PublishedFilesPath' not found. Please run PublishLocalSampleWpfApp.ps1 first."
     }
 
     # Resolve MSI Out folder (if provided) to an absolute path and ensure it exists with trailing separator
@@ -110,10 +110,26 @@ try {
             $resolved = Resolve-Path -Path $MsiOutFolderPath -ErrorAction SilentlyContinue
             $absoluteMsiOutFolderPath = if ($resolved) { $resolved.Path } else { Join-Path (Get-Location) $MsiOutFolderPath }
         }
-        if (-not (Test-Path $absoluteMsiOutFolderPath)) {
+
+        # Normalize to full path before checking/creating/clearing
+        $absoluteMsiOutFolderPath = [System.IO.Path]::GetFullPath($absoluteMsiOutFolderPath)
+
+        if (Test-Path -Path $absoluteMsiOutFolderPath -PathType Container) {
+            # Clear existing content in the MSI output folder (safety: never clear a root drive)
+            $root = [System.IO.Path]::GetPathRoot($absoluteMsiOutFolderPath)
+            if ($absoluteMsiOutFolderPath -eq $root) {
+                throw "Refusing to clear root drive pointed to by MsiOutFolderPath '$absoluteMsiOutFolderPath'."
+            }
+            Write-Host "🧹 Clearing existing MsiOutFolderPath contents: $absoluteMsiOutFolderPath" -ForegroundColor DarkGray
+            Get-ChildItem -Path $absoluteMsiOutFolderPath -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        elseif (Test-Path -Path $absoluteMsiOutFolderPath -PathType Leaf) {
+            throw "MsiOutFolderPath '$absoluteMsiOutFolderPath' points to a file, not a directory."
+        }
+        else {
             New-Item -ItemType Directory -Path $absoluteMsiOutFolderPath -Force | Out-Null
         }
-        $absoluteMsiOutFolderPath = [System.IO.Path]::GetFullPath($absoluteMsiOutFolderPath)
+
         if ($absoluteMsiOutFolderPath -notmatch '[\\/]$') {
             $absoluteMsiOutFolderPath += [System.IO.Path]::DirectorySeparatorChar
         }
