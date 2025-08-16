@@ -31,14 +31,9 @@ The build configuration to use. Defaults to "Release".
 .PARAMETER Platform
 The target platform. Defaults to "x64" (the only platform currently supported).
 
-.EXAMPLE
-.\BuildWixMsi.ps1 -Version "1.2.3"
-
-.EXAMPLE
-.\BuildWixMsi.ps1 -Version "1.0.0" -ProductName "My WPF App" -Manufacturer "My Company"
-
-.EXAMPLE
-.\BuildWixMsi.ps1 -Version "2.1.0" -Configuration "Debug" -Platform "x86"
+.PARAMETER MsiOutFolderPath
+Optional. Specifies the output folder path for the generated MSI installer files.
+Otherwise, the default output path will be used : "WixMsi\bin\$Platform\$Configuration\en-US\"
 #>
 
 [CmdletBinding()]
@@ -66,7 +61,10 @@ param(
 
     [Parameter(Mandatory = $false)]
     [ValidateSet("x64")]
-    [string]$Platform = "x64"
+    [string]$Platform = "x64",
+
+    [Parameter(Mandatory = $false)]
+    [string]$MsiOutFolderPath
 )
 
 # Set error action preference
@@ -103,6 +101,24 @@ try {
         throw "Published files path '$PublishedFilesPath' not found. Please run PublishLocalSampleWpfApp.ps1 first."
     }
 
+    # Resolve MSI Out folder (if provided) to an absolute path and ensure it exists with trailing separator
+    $absoluteMsiOutFolderPath = $null
+    if ($MsiOutFolderPath) {
+        if ([System.IO.Path]::IsPathRooted($MsiOutFolderPath)) {
+            $absoluteMsiOutFolderPath = $MsiOutFolderPath
+        } else {
+            $resolved = Resolve-Path -Path $MsiOutFolderPath -ErrorAction SilentlyContinue
+            $absoluteMsiOutFolderPath = if ($resolved) { $resolved.Path } else { Join-Path (Get-Location) $MsiOutFolderPath }
+        }
+        if (-not (Test-Path $absoluteMsiOutFolderPath)) {
+            New-Item -ItemType Directory -Path $absoluteMsiOutFolderPath -Force | Out-Null
+        }
+        $absoluteMsiOutFolderPath = [System.IO.Path]::GetFullPath($absoluteMsiOutFolderPath)
+        if ($absoluteMsiOutFolderPath -notmatch '[\\/]$') {
+            $absoluteMsiOutFolderPath += [System.IO.Path]::DirectorySeparatorChar
+        }
+    }
+
     Write-Host "📋 Build configuration:" -ForegroundColor Cyan
     Write-Host "  - Package Id: $PackageId"
     Write-Host "  - Package Version: $packageVersion"
@@ -112,6 +128,9 @@ try {
     Write-Host "  - Configuration: $Configuration"
     Write-Host "  - Platform: $Platform"
     Write-Host "  - Published Files Path: $absolutePublishedFilesPath"
+    if ($absoluteMsiOutFolderPath) {
+        Write-Host "  - MSI Out Folder Path: $absoluteMsiOutFolderPath"
+    }
 
     # Validate that published files exist
     if (-not (Test-Path (Join-Path $absolutePublishedFilesPath "*.exe"))) {
@@ -134,6 +153,12 @@ try {
         "-p:PublishedFilesPath=$absolutePublishedFilesPath"
     )
 
+    if ($absoluteMsiOutFolderPath) {
+        # Set both OutDir and OutputPath for broader MSBuild compatibility
+        # $buildArgs += "-p:OutDir=$absoluteMsiOutFolderPath"
+        $buildArgs += "-p:OutputPath=$absoluteMsiOutFolderPath"
+    }
+
     Write-Host "  - Running: dotnet $($buildArgs -join ' ')" -ForegroundColor Gray
     & dotnet @buildArgs
 
@@ -144,8 +169,17 @@ try {
     Write-Host "✅ WiX MSI installer built successfully!" -ForegroundColor Green
 
     # Find and display the output MSI file
-    $msiPattern = "WixMsi\bin\$Platform\$Configuration\en-US\*.msi"
-    $msiFiles = Get-ChildItem $msiPattern -ErrorAction SilentlyContinue
+    if ($absoluteMsiOutFolderPath) {
+        $msiPattern = Join-Path $absoluteMsiOutFolderPath "en-US\*.msi"
+        $msiFiles = Get-ChildItem $msiPattern -ErrorAction SilentlyContinue
+        if (-not $msiFiles) {
+            $msiPattern = Join-Path $absoluteMsiOutFolderPath "*.msi"
+            $msiFiles = Get-ChildItem $msiPattern -ErrorAction SilentlyContinue
+        }
+    } else {
+        $msiPattern = "WixMsi\bin\$Platform\$Configuration\en-US\*.msi"
+        $msiFiles = Get-ChildItem $msiPattern -ErrorAction SilentlyContinue
+    }
 
     if ($msiFiles) {
         $msiFile = $msiFiles[0]

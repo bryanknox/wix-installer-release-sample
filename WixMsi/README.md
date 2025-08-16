@@ -35,7 +35,6 @@ The installer supports the following parameters:
 | `Manufacturer` | Company/manufacturer name | "Bryan Knox" |
 | `PackageVersion` | 4-part version number (e.g., "1.2.3.0") | "1.0.0.0" |
 | `PublishedFilesPath` | Path to published application files | "../local-published/SampleWpfApp-output" |
-| `PackageId` | Identifier used for the WiX Package Id | "bryanknox.SampleWpfApp.5fce338" |
 
 ## Usage
 
@@ -52,14 +51,20 @@ The installer supports the following parameters:
 Use the provided PowerShell scripts for an automated build process:
 
 ```powershell
-# Build & publish the application and build the MSI
+# Build & publish app then build MSI
 .\scripts\PublishAndBuildMsi.ps1 -Version "1.2.3"
 
-# Build with custom product information
-.\scripts\PublishAndBuildMsi.ps1 -Version "1.0.0" -ProductName "My WPF App" -Manufacturer "My Company" -PackageId "com.myco.myapp.pkg"
+# Build & publish app then build MSI, with custom product information
+.\scripts\PublishAndBuildMsi.ps1 -Version "1.0.0" -ProductName "My WPF App" -Manufacturer "My Company"
+
+# Build & publish app then build MSI, placing output in c:\build\msi\
+.\scripts\PublishAndBuildMsi.ps1 -Version "1.2.3" -MsiOutFolderPath "c:\build\msi"
 
 # Build only the MSI (if app is already published)
-.\scripts\BuildWixMsi.ps1 -Version "1.2.3" -PackageId "bryanknox.SampleWpfApp.5fce338"
+.\scripts\BuildWixMsi.ps1 -Version "1.2.3"
+
+# Build only MSI, placing output in .\artifacts\msi\
+.\scripts\BuildWixMsi.ps1 -Version "1.2.3" -MsiOutFolderPath ".\artifacts\msi"
 ```
 
 #### Option 2: Using dotnet build directly
@@ -71,8 +76,7 @@ dotnet build WixMsi\WixMsi.wixproj `
   -p:ProductName="Sample WPF App" `
   -p:Manufacturer="Bryan Knox" `
   -p:PackageVersion="1.2.3.0" `
-  -p:PublishedFilesPath="C:\full\path\to\published\files" `
-  -p:PackageId="bryanknox.SampleWpfApp.5fce338"
+  -p:PublishedFilesPath="C:\full\path\to\published\files"
 ```
 
 #### Option 3: Using MSBuild
@@ -84,8 +88,7 @@ msbuild WixMsi\WixMsi.wixproj `
   /p:ProductName="Sample WPF App" `
   /p:Manufacturer="Bryan Knox" `
   /p:PackageVersion="1.2.3.0" `
-  /p:PublishedFilesPath="C:\full\path\to\published\files" `
-  /p:PackageId="bryanknox.SampleWpfApp.5fce338"
+  /p:PublishedFilesPath="C:\full\path\to\published\files"
 ```
 
 ### Output Location
