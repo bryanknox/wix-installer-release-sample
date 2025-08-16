@@ -35,6 +35,7 @@ The installer supports the following parameters:
 | `Manufacturer` | Company/manufacturer name | "Bryan Knox" |
 | `PackageVersion` | 4-part version number (e.g., "1.2.3.0") | "1.0.0.0" |
 | `PublishedFilesPath` | Path to published application files | "../local-published/SampleWpfApp-output" |
+| `PackageId` | Identifier used for the WiX Package Id | "bryanknox.SampleWpfApp.5fce338" |
 
 ## Usage
 
@@ -55,10 +56,10 @@ Use the provided PowerShell scripts for an automated build process:
 .\scripts\PublishAndBuildMsi.ps1 -Version "1.2.3"
 
 # Build with custom product information
-.\scripts\PublishAndBuildMsi.ps1 -Version "1.0.0" -ProductName "My WPF App" -Manufacturer "My Company"
+.\scripts\PublishAndBuildMsi.ps1 -Version "1.0.0" -ProductName "My WPF App" -Manufacturer "My Company" -PackageId "com.myco.myapp.pkg"
 
 # Build only the MSI (if app is already published)
-.\scripts\BuildWixMsi.ps1 -Version "1.2.3"
+.\scripts\BuildWixMsi.ps1 -Version "1.2.3" -PackageId "bryanknox.SampleWpfApp.5fce338"
 ```
 
 #### Option 2: Using dotnet build directly
@@ -70,7 +71,8 @@ dotnet build WixMsi\WixMsi.wixproj `
   -p:ProductName="Sample WPF App" `
   -p:Manufacturer="Bryan Knox" `
   -p:PackageVersion="1.2.3.0" `
-  -p:PublishedFilesPath="C:\full\path\to\published\files"
+  -p:PublishedFilesPath="C:\full\path\to\published\files" `
+  -p:PackageId="bryanknox.SampleWpfApp.5fce338"
 ```
 
 #### Option 3: Using MSBuild
@@ -82,7 +84,8 @@ msbuild WixMsi\WixMsi.wixproj `
   /p:ProductName="Sample WPF App" `
   /p:Manufacturer="Bryan Knox" `
   /p:PackageVersion="1.2.3.0" `
-  /p:PublishedFilesPath="C:\full\path\to\published\files"
+  /p:PublishedFilesPath="C:\full\path\to\published\files" `
+  /p:PackageId="bryanknox.SampleWpfApp.5fce338"
 ```
 
 ### Output Location

@@ -8,6 +8,9 @@ This script combines the functionality of PublishLocalSampleWpfApp.ps1 and Build
 to provide a complete build pipeline from source code to MSI installer. It publishes the
 WPF application and then builds the MSI installer that includes all published files.
 
+.PARAMETER PackageId
+The WiX Package Id. Defaults to "bryanknox.SampleWpfApp.5fce338".
+
 .PARAMETER Version
 The version number in semantic version format (e.g., "1.2.3").
 
@@ -39,7 +42,11 @@ Useful when the application has already been published.
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, Position = 0)]
+
+    [Parameter(Mandatory = $false, Position = 0)]
+    [string]$PackageId = "bryanknox.SampleWpfApp.5fce338",
+
+    [Parameter(Mandatory = $true)]
     [ValidatePattern('^\d+\.\d+\.\d+$')]
     [string]$Version,
 
@@ -87,9 +94,10 @@ try {
     }
 
     Write-Host "📋 Pipeline configuration:" -ForegroundColor Cyan
+    Write-Host "  - Package Id: $PackageId"
+    Write-Host "  - Version: $Version"
     Write-Host "  - Product Name: $ProductName"
     Write-Host "  - Manufacturer: $Manufacturer"
-    Write-Host "  - Version: $Version"
     Write-Host "  - Configuration: $Configuration"
     Write-Host "  - Platform: $Platform"
     Write-Host "  - Skip Publish: $SkipPublish"
@@ -115,7 +123,7 @@ try {
     Write-Host ""
     Write-Host "📦 Step 2: Building MSI installer..." -ForegroundColor Yellow
 
-    & $BUILD_MSI_SCRIPT -Version $Version -ProductName $ProductName -Manufacturer $Manufacturer -Configuration $Configuration -Platform $Platform
+    & $BUILD_MSI_SCRIPT -PackageId $PackageId -Version $Version -ProductName $ProductName -Manufacturer $Manufacturer -Configuration $Configuration -Platform $Platform
 
     if ($LASTEXITCODE -ne 0) {
         throw "MSI build failed with exit code $LASTEXITCODE"

@@ -2,9 +2,10 @@
 
   <PropertyGroup>
     <!-- Default values for parameterization - can be overridden via command line or environment -->
+    <PackageId Condition="'$(PackageId)' == ''">bryanknox.SampleWpfApp.5fce338</PackageId>
+    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0.0</PackageVersion>
     <ProductName Condition="'$(ProductName)' == ''">Sample WPF App</ProductName>
     <Manufacturer Condition="'$(Manufacturer)' == ''">Bryan Knox</Manufacturer>
-    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0.0</PackageVersion>
     <PublishedFilesPath Condition="'$(PublishedFilesPath)' == ''">$(MSBuildProjectDirectory)\..\local-published\SampleWpfApp-output</PublishedFilesPath>
     <MainExecutableFileName Condition="'$(MainExecutableFileName)' == ''">SampleWpfApp.exe</MainExecutableFileName>
   </PropertyGroup>
@@ -12,9 +13,10 @@
   <PropertyGroup>
     <!-- Define WiX preprocessor variables using DefineConstants -->
     <DefineConstants>
+      PackageId=$(PackageId);
+      PackageVersion=$(PackageVersion);
       ProductName=$(ProductName);
       Manufacturer=$(Manufacturer);
-      PackageVersion=$(PackageVersion);
       PublishedFilesPath=$(PublishedFilesPath);
       MainExecutableFileName=$(MainExecutableFileName)
     </DefineConstants>

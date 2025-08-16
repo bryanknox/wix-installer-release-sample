@@ -9,6 +9,9 @@ version information and other properties that can be passed to the WiX build pro
 The script assumes that the application has already been published and are located in
 the directory indicated by the PublishedFilesPath parameter.
 
+.PARAMETER PackageId
+The WiX Package Id. Defaults to "bryanknox.SampleWpfApp.5fce338".
+
 .PARAMETER Version
 The version number in semantic version format (e.g., "1.2.3"). This will be converted
 to a 4-part version number for the MSI package (e.g., "1.2.3.0").
@@ -40,7 +43,11 @@ The target platform. Defaults to "x64" (the only platform currently supported).
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, Position = 0)]
+
+    [Parameter(Mandatory = $false, Position = 0)]
+    [string]$PackageId = "bryanknox.SampleWpfApp.5fce338",
+
+    [Parameter(Mandatory = $true)]
     [ValidatePattern('^\d+\.\d+\.\d+$')]
     [string]$Version,
 
@@ -97,10 +104,11 @@ try {
     }
 
     Write-Host "📋 Build configuration:" -ForegroundColor Cyan
+    Write-Host "  - Package Id: $PackageId"
+    Write-Host "  - Package Version: $packageVersion"
     Write-Host "  - Product Name: $ProductName"
     Write-Host "  - Manufacturer: $Manufacturer"
     Write-Host "  - Version: $Version"
-    Write-Host "  - Package Version: $packageVersion"
     Write-Host "  - Configuration: $Configuration"
     Write-Host "  - Platform: $Platform"
     Write-Host "  - Published Files Path: $absolutePublishedFilesPath"
@@ -118,10 +126,11 @@ try {
         $WIX_PROJECT_PATH
         '--configuration', $Configuration
         '--verbosity', 'minimal'
+        "-p:PackageId=$PackageId"
+        "-p:PackageVersion=$packageVersion"
         "-p:Platform=$Platform"
         "-p:ProductName=$ProductName"
         "-p:Manufacturer=$Manufacturer"
-        "-p:PackageVersion=$packageVersion"
         "-p:PublishedFilesPath=$absolutePublishedFilesPath"
     )
 
