@@ -8,6 +8,8 @@
     <Manufacturer Condition="'$(Manufacturer)' == ''">Bryan Knox</Manufacturer>
     <PublishedFilesPath Condition="'$(PublishedFilesPath)' == ''">$(MSBuildProjectDirectory)\..\local-published\SampleWpfApp-output</PublishedFilesPath>
     <MainExecutableFileName Condition="'$(MainExecutableFileName)' == ''">SampleWpfApp.exe</MainExecutableFileName>
+    <MsiFileName Condition="'$(MsiFileName)' == ''">WixMsi</MsiFileName>
+    <OutputName>$(MsiFileName)</OutputName>
   </PropertyGroup>
 
   <PropertyGroup>

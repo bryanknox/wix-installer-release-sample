@@ -30,6 +30,9 @@ The target platform for the MSI. Defaults to "x64" (the only platform currently 
 If specified, skips the publishing step and only builds the MSI installer.
 Useful when the application has already been published.
 
+.PARAMETER MsiFileName
+Optional. The base name for the generated MSI file (without .msi extension). Defaults to "WixMsi".
+
 .PARAMETER MsiOutFolderPath
 Optional. Specifies the output folder path for the generated MSI installer files.
 Otherwise, the default output path will be used : "WixMsi\bin\$Platform\$Configuration\en-US\"
@@ -61,6 +64,9 @@ param(
 
     [Parameter(Mandatory = $false)]
     [switch]$SkipPublish,
+
+    [Parameter(Mandatory = $false)]
+    [string]$MsiFileName = "WixMsi",
 
     [Parameter(Mandatory = $false)]
     [string]$MsiOutFolderPath
@@ -102,6 +108,9 @@ try {
     if ($MsiOutFolderPath) {
         Write-Host "  - MSI Out Folder Path: $MsiOutFolderPath"
     }
+    if ($MsiFileName) {
+        Write-Host "  - MSI File Name: $MsiFileName"
+    }
 
     # Step 1: Publish the WPF application (unless skipped)
     if (-not $SkipPublish) {
@@ -124,7 +133,7 @@ try {
     Write-Host ""
     Write-Host "📦 Step 2: Building MSI installer..." -ForegroundColor Yellow
 
-    & $BUILD_MSI_SCRIPT -PackageId $PackageId -Version $Version -ProductName $ProductName -Manufacturer $Manufacturer -Configuration $Configuration -Platform $Platform -MsiOutFolderPath $MsiOutFolderPath
+    & $BUILD_MSI_SCRIPT -PackageId $PackageId -Version $Version -ProductName $ProductName -Manufacturer $Manufacturer -Configuration $Configuration -Platform $Platform -MsiFileName $MsiFileName -MsiOutFolderPath $MsiOutFolderPath
 
     if ($LASTEXITCODE -ne 0) {
         throw "MSI build failed with exit code $LASTEXITCODE"

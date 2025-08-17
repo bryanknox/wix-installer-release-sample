@@ -31,6 +31,9 @@ The build configuration to use. Defaults to "Release".
 .PARAMETER Platform
 The target platform. Defaults to "x64" (the only platform currently supported).
 
+.PARAMETER MsiFileName
+Optional. The base name for the generated MSI file (without .msi extension). Defaults to "WixMsi".
+
 .PARAMETER MsiOutFolderPath
 Optional. Specifies the output folder path for the generated MSI installer files.
 Otherwise, the default output path will be used : "WixMsi\bin\$Platform\$Configuration\en-US\"
@@ -62,6 +65,9 @@ param(
     [Parameter(Mandatory = $false)]
     [ValidateSet("x64")]
     [string]$Platform = "x64",
+
+    [Parameter(Mandatory = $false)]
+    [string]$MsiFileName = "WixMsi",
 
     [Parameter(Mandatory = $false)]
     [string]$MsiOutFolderPath
@@ -144,6 +150,9 @@ try {
     Write-Host "  - Configuration: $Configuration"
     Write-Host "  - Platform: $Platform"
     Write-Host "  - Published Files Path: $absolutePublishedFilesPath"
+    if ($MsiFileName) {
+        Write-Host "  - MSI File Name: $MsiFileName"
+    }
     if ($absoluteMsiOutFolderPath) {
         Write-Host "  - MSI Out Folder Path: $absoluteMsiOutFolderPath"
     }
@@ -169,6 +178,9 @@ try {
         "-p:PublishedFilesPath=$absolutePublishedFilesPath"
     )
 
+    if ($MsiFileName) {
+        $buildArgs += "-p:MsiFileName=$MsiFileName"
+    }
     if ($absoluteMsiOutFolderPath) {
         # Set both OutDir and OutputPath for broader MSBuild compatibility
         # $buildArgs += "-p:OutDir=$absoluteMsiOutFolderPath"

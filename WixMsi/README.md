@@ -7,7 +7,7 @@ This directory contains a WiX 6 installer project that creates an MSI installer 
 The WiX installer project uses the WiX 6 Toolset with HeatWave Community Edition features:
 
 - **File Harvesting**: Uses the `Files` element to automatically harvest all files from the published application output
-- **Parameterization**: Supports configurable product name, manufacturer, version, and file paths
+- **Parameterization**: Supports configurable product name, manufacturer, version, file paths, and MSI filename
 
 ## Project Structure
 
@@ -31,10 +31,13 @@ The installer supports the following parameters:
 
 | Parameter | Description | Default Value |
 |-----------|-------------|---------------|
+| `PackageId` | Unique identifier for the package | "bryanknox.SampleWpfApp.5fce338" |
+| `PackageVersion` | 4-part version number (e.g., "1.2.3.0") | "1.0.0.0" |
 | `ProductName` | Display name of the product | "Sample WPF App" |
 | `Manufacturer` | Company/manufacturer name | "Bryan Knox" |
-| `PackageVersion` | 4-part version number (e.g., "1.2.3.0") | "1.0.0.0" |
 | `PublishedFilesPath` | Path to published application files | "../local-published/SampleWpfApp-output" |
+| `MainExecutableFileName` | Name of the main executable file in the PublishedFilesPath | "SampleWpfApp.exe" |
+| `MsiFileName` | Base name for the generated MSI file (without .msi extension) | "WixMsi" |
 
 ## Usage
 
@@ -57,11 +60,17 @@ Use the provided PowerShell scripts for an automated build process:
 # Build & publish app then build MSI, with custom product information
 .\scripts\PublishAndBuildMsi.ps1 -Version "1.0.0" -ProductName "My WPF App" -Manufacturer "My Company"
 
+# Build & publish app then build MSI with custom MSI filename
+.\scripts\PublishAndBuildMsi.ps1 -Version "1.2.3" -MsiFileName "MyApp-Setup"
+
 # Build & publish app then build MSI, placing output in c:\build\msi\
 .\scripts\PublishAndBuildMsi.ps1 -Version "1.2.3" -MsiOutFolderPath "c:\build\msi"
 
 # Build only the MSI (if app is already published)
 .\scripts\BuildWixMsi.ps1 -Version "1.2.3"
+
+# Build only MSI with custom filename
+.\scripts\BuildWixMsi.ps1 -Version "1.2.3" -MsiFileName "MyApp-Setup"
 
 # Build only MSI, placing output in .\artifacts\msi\
 .\scripts\BuildWixMsi.ps1 -Version "1.2.3" -MsiOutFolderPath ".\artifacts\msi"
@@ -76,7 +85,8 @@ dotnet build WixMsi\WixMsi.wixproj `
   -p:ProductName="Sample WPF App" `
   -p:Manufacturer="Bryan Knox" `
   -p:PackageVersion="1.2.3.0" `
-  -p:PublishedFilesPath="C:\full\path\to\published\files"
+  -p:PublishedFilesPath="C:\full\path\to\published\files" `
+  -p:MsiFileName="MyApp-Setup"
 ```
 
 #### Option 3: Using MSBuild
@@ -88,17 +98,20 @@ msbuild WixMsi\WixMsi.wixproj `
   /p:ProductName="Sample WPF App" `
   /p:Manufacturer="Bryan Knox" `
   /p:PackageVersion="1.2.3.0" `
-  /p:PublishedFilesPath="C:\full\path\to\published\files"
+  /p:PublishedFilesPath="C:\full\path\to\published\files" `
+  /p:MsiFileName="MyApp-Setup"
 ```
 
 ### Output Location
 
 The MSI installer will be created in:
 ```
-WixMsi\bin\{Platform}\{Configuration}\en-US\WixMsi.msi
+WixMsi\bin\{Platform}\{Configuration}\en-US\{MsiFileName}.msi
 ```
 
-For example: `WixMsi\bin\x64\Release\en-US\WixMsi.msi`
+For example:
+- Default: `WixMsi\bin\x64\Release\en-US\WixMsi.msi`
+- With custom name: `WixMsi\bin\x64\Release\en-US\MyApp-Setup.msi`
 
 ## GitHub Actions Integration
 
@@ -115,7 +128,8 @@ Example GitHub Actions usage:
       -p:ProductName="Sample WPF App" `
       -p:Manufacturer="Bryan Knox" `
       -p:PackageVersion="${{ github.event.inputs.version }}.0" `
-      -p:PublishedFilesPath="${{ github.workspace }}/published-output"
+      -p:PublishedFilesPath="${{ github.workspace }}/published-output" `
+      -p:MsiFileName="SampleWpfApp-${{ github.event.inputs.version }}-Setup"
 ```
 
 ## Development Notes
@@ -125,6 +139,12 @@ Example GitHub Actions usage:
 - The installer expects a 4-part version number (e.g., "1.2.3.0")
 - Scripts automatically convert 3-part semantic versions to 4-part versions
 - Version is used for MSI package versioning and upgrade logic
+
+### MSI File Naming
+
+- The `MsiFileName` parameter controls the output MSI filename
+- Do not include the `.msi` extension - it will be added automatically
+- Useful for including version numbers or build identifiers in the filename
 
 ### Localization
 
