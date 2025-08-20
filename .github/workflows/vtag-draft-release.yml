@@ -130,7 +130,7 @@ jobs:
         shell: pwsh
         run: |
           $wpfAppPublishedOutputPath = "${{ runner.temp }}/wpf-pub-output"
-          $zipPath = "${{ runner.temp }}/wpf-zip-output/${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_NAME }}"
+          $zipPath = Join-Path "${{ runner.temp }}" "${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_NAME }}"
           Compress-Archive -Path "$wpfAppPublishedOutputPath\*" -DestinationPath $zipPath -Force
           Write-Host "Created zip archive: $zipPath"
 
@@ -138,7 +138,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_ARTIFACT_NAME }}
-          path: "${{ runner.temp }}/wpf-zip-output/${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_NAME }}"
+          path: Join-Path "${{ runner.temp }}" "${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_NAME }}"
           retention-days: 7
 
       - name: Create MSI for WPF app
