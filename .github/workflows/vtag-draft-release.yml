@@ -12,17 +12,22 @@ permissions:
   contents: read
 
 env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: true       # Disable sending .NET CLI telemetry
   DOTNET_NOLOGO: true                     # Disable the .NET logo
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true # Disable the .NET first time experience
-  DOTNET_CLI_TELEMETRY_OPTOUT: true       # Disable sending .NET CLI telemetry
   DOTNET_VERSION: '9.0.x'
   # Environment variables for MSI packaging
   MSI_WIX_PACKAGE_ID: 'bryanknox.SampleWpfApp.5fce338'
+  MSI_WIX_PLATFORM: 'x64'
+  MSI_WIX_PROJ_PATH: 'WixMsi/WixMsi.wixproj'
+  MSI_WIX_OUTPUT_PATH: ${{ runner.temp }}/msi-output
   MSI_WIX_MANUFACTURER: 'Bryan Knox'
-  # Environment variables for release configuration
+  # Environment variables for WPF app
   CONFIGURATION: Release
   WPF_APP_CSPROJ_PATH: src/SampleWpfApp/SampleWpfApp.csproj
-  TARGET_RUNTIME: win-x64
+  WPF_APP_PUB_OUTPUT_PATH: ${{ runner.temp }}/wpf-pub-output
+  WPF_APP_RUNTIME: win-x64
+  # Environment variables for zip artifact
 
 jobs:
 
@@ -52,8 +57,8 @@ jobs:
     timeout-minutes: 20
     outputs:
       wpf-app-assembly-name: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}
-      wpf-app-zip-artifact-name: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_ARTIFACT_NAME }}
-      wpf-app-zip-file-name: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_NAME }}
+      zip-artifact-name: ${{ steps.get-wpf-app-names.outputs.ZIP_ARTIFACT_NAME }}
+      zip-file-name: ${{ steps.get-wpf-app-names.outputs.ZIP_FILE_NAME }}
     steps:
 
       - name: 🤘 Checkout repository
@@ -78,7 +83,7 @@ jobs:
           Write-Host "Extracted WPF app assembly name: $assemblyName"
 
           $version = "${{ needs.get-version-job.outputs.release-version }}"
-          $artifactNameCore = "${assemblyName}-${version}-${env:TARGET_RUNTIME}"
+          $artifactNameCore = "${assemblyName}-${version}-${env:WPF_APP_RUNTIME}"
 
           $msiArtifactName = "${artifactNameCore}.msi"
           $msiName = "${artifactNameCore}"
@@ -94,13 +99,13 @@ jobs:
 
           "WPF_APP_ASSEMBLY_NAME=$assemblyName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-          "WPF_APP_MSI_ARTIFACT_NAME=$msiArtifactName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "MSI_ARTIFACT_NAME=$msiArtifactName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-          "WPF_APP_MSI_NAME=$msiName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "MSI_NAME=$msiName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-          "WPF_APP_ZIP_ARTIFACT_NAME=$zipArtifactName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "ZIP_ARTIFACT_NAME=$zipArtifactName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-          "WPF_APP_ZIP_FILE_NAME=$zipFileName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "ZIP_FILE_NAME=$zipFileName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: 📦 dotnet publish WPF app
         shell: pwsh
@@ -117,8 +122,8 @@ jobs:
             $env:WPF_APP_CSPROJ_PATH `
             --configuration $env:CONFIGURATION `
             --self-contained `
-            --runtime $env:TARGET_RUNTIME `
-            --output ${{ runner.temp }}/wpf-pub-output `
+            --runtime $env:WPF_APP_RUNTIME `
+            --output $env:WPF_APP_PUB_OUTPUT_PATH `
             --verbosity minimal `
             -p:Version=$semVersion `
             -p:AssemblyVersion=$semVersionDotZero  `
@@ -126,45 +131,51 @@ jobs:
             -p:InformationalVersion=$semVersionDotBuildNumber `
             -p:IncludeSourceRevisionInInformationalVersion=true
 
-      - name: 📦 Create zip archive of WPF app
+      - name: 📦 Create Zip archive of WPF app
         shell: pwsh
         run: |
-          $wpfAppPublishedOutputPath = "${{ runner.temp }}/wpf-pub-output"
-          $zipPath = Join-Path "${{ runner.temp }}" "${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_NAME }}"
+          $wpfAppPublishedOutputPath = "$env:WPF_APP_PUB_OUTPUT_PATH"
+          $zipPath = Join-Path "${{ runner.temp }}" "${{ steps.get-wpf-app-names.outputs.ZIP_FILE_NAME }}"
           Compress-Archive -Path "$wpfAppPublishedOutputPath\*" -DestinationPath $zipPath -Force
           Write-Host "Created zip archive: $zipPath"
 
-      - name: 📤 Upload WPF app zip to Artifacts
+      - name: 📤 Upload Zip to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_ARTIFACT_NAME }}
-          path: Join-Path "${{ runner.temp }}" "${{ steps.get-wpf-app-names.outputs.WPF_APP_ZIP_FILE_NAME }}"
+          name: "${{ steps.get-wpf-app-names.outputs.ZIP_ARTIFACT_NAME }}"
+          path: Join-Path "${{ runner.temp }}" "${{ steps.get-wpf-app-names.outputs.ZIP_FILE_NAME }}"
           retention-days: 7
 
       - name: Create MSI for WPF app
         shell: pwsh
         run: |
-          $packageId = $env:MSI_WIX_PACKAGE_ID
 
-          $buildNumber = $env:GITHUB_RUN_NUMBER
           $semVersion = "${{ needs.get-version-job.outputs.release-version }}"
-          $packageVersion = "${semVersion}.${buildNumber}"
+          $packageVersion = "${semVersion}.${env:GITHUB_RUN_NUMBER}"
 
           $productName = "${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}"
-          $manufacturer = $env:MSI_WIX_MANUFACTURER
-          $publishedFilesPath = "${{ runner.temp }}/wpf-pub-output"
           $mainExecutableFileName = "${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}.exe"
-          $msiFileNameWithOutExt = "${{ steps.get-wpf-app-names.outputs.WPF_APP_MSI_NAME }}"
+          $msiFileNameWithOutExt = "${{ steps.get-wpf-app-names.outputs.MSI_NAME }}"
 
-          Write-Host "packageId: $packageId"
           Write-Host "packageVersion: $packageVersion"
           Write-Host "productName: $productName"
           Write-Host "manufacturer: $manufacturer"
-          Write-Host "publishedFilesPath: $publishedFilesPath"
           Write-Host "mainExecutableFileName: $mainExecutableFileName"
           Write-Host "msiFileNameWithOutExt: $msiFileNameWithOutExt"
 
-          # TODO: build WixMsi project.
+          # build WixMsi project.
+          dotnet build `
+            $env:MSI_WIX_PROJ_PATH `
+            --configuration $env:CONFIGURATION `
+            --verbosity minimal `
+            -p:PackageId=$env:MSI_WIX_PACKAGE_ID `
+            -p:PackageVersion=$packageVersion `
+            -p:Platform=$env:MSI_WIX_PLATFORM `
+            -p:ProductName=$productName `
+            -p:Manufacturer=$env:MSI_WIX_MANUFACTURER `
+            -p:PublishedFilesPath=$env:WPF_APP_PUB_OUTPUT_PATH `
+            -p:MsiFileName=$msiFileNameWithOutExt `
+            -p:OutputPath=$env:MSI_WIX_OUTPUT_PATH
 
   draft-release-wpf-app-job:
     name: Create draft release for WPF app
@@ -184,7 +195,7 @@ jobs:
       - name: 📥 Download zip artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-zip-artifact-name }}
+          name: ${{ needs.build-publish-wpf-app-artifact-job.outputs.zip-artifact-name }}
           path: ${{ runner.temp }}/dist
 
       - name: 📝 Generate release notes
@@ -194,7 +205,7 @@ jobs:
           # Use the version extracted from the get-version-job
           $version = "${{ needs.get-version-job.outputs.release-version }}"
 
-          $artifactZipName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-zip-file-name }}"
+          $artifactZipName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.zip-file-name }}"
           $appName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}"
           $exeName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}.exe"
 
