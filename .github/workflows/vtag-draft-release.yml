@@ -107,27 +107,24 @@ jobs:
 
       - name: 📦 dotnet publish WPF app
         shell: pwsh
+        env:
+          STEP_BUILD_NUMBER: ${{ github.run_number }}
+          STEP_SEM_VERSION: ${{ needs.get-version-job.outputs.release-version }}
+          STEP_SEM_VERSION_DOT_ZERO: ${{ needs.get-version-job.outputs.release-version }}.0
+          STEP_SEM_VERSION_DOT_BUILD_NUMBER: ${{ needs.get-version-job.outputs.release-version }}.${{ github.run_number }}
+          STEP_WPF_APP_PUB_OUTPUT_PATH: ${{ runner.temp }}/wpf-pub-output
         run: |
-          $buildNumber = $env:GITHUB_RUN_NUMBER
-          $semVersion = "${{ needs.get-version-job.outputs.release-version }}"
-          $semVersionDotZero  = ($semVersion + ".0")
-          $semVersionDotBuildNumber = "$semVersion.$buildNumber"
-          $wpfAppPubOutputPath = "${{ runner.temp }}/wpf-pub-output"
-
-          Write-Host "semVersionDotZero: $semVersionDotZero"
-          Write-Host "semVersionDotBuildNumber: $semVersionDotBuildNumber"
-
           dotnet publish `
             $env:WPF_APP_CSPROJ_PATH `
             --configuration $env:CONFIGURATION `
             --self-contained `
             --runtime $env:WPF_APP_RUNTIME `
-            --output $wpfAppPubOutputPath `
+            --output $env:STEP_WPF_APP_PUB_OUTPUT_PATH `
             --verbosity minimal `
-            -p:Version=$semVersion `
-            -p:AssemblyVersion=$semVersionDotZero `
-            -p:FileVersion=$semVersionDotZero `
-            -p:InformationalVersion=$semVersionDotBuildNumber `
+            -p:Version=$env:STEP_SEM_VERSION `
+            -p:AssemblyVersion=$env:STEP_SEM_VERSION_DOT_ZERO `
+            -p:FileVersion=$env:STEP_SEM_VERSION_DOT_ZERO `
+            -p:InformationalVersion=$env:STEP_SEM_VERSION_DOT_BUILD_NUMBER `
             -p:IncludeSourceRevisionInInformationalVersion=true
 
       - name: 📦 Create Zip archive of WPF app
