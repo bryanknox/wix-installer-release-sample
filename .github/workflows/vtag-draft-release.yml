@@ -204,34 +204,27 @@ jobs:
       - name: 📝 Generate release notes
         id: release-notes
         shell: pwsh
+        env:
+          STEP_VERSION: ${{ needs.get-version-job.outputs.release-version }}
+          STEP_ARTIFACT_ZIP_NAME: ${{ needs.build-publish-wpf-app-artifact-job.outputs.zip-file-name }}
+          STEP_ARTIFACT_MSI_NAME: ${{ needs.build-publish-wpf-app-artifact-job.outputs.msi-file-name }}
+          STEP_APP_NAME: ${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}
+          STEP_EXE_NAME: ${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}.exe
         run: |
-          # Use the version extracted from the get-version-job
-          $version = "${{ needs.get-version-job.outputs.release-version }}"
-
-          $artifactZipName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.zip-file-name }}"
-          $artifactMsiName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.msi-file-name }}"
-          $appName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}"
-          $exeName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}.exe"
-
-          Write-Host "version: $version"
-          Write-Host "artifactZipName: $artifactZipName"
-          Write-Host "artifactMsiName: $artifactMsiName"
-          Write-Host "appName: $appName"
-          Write-Host "exeName: $exeName"
 
           # Create release notes using StringBuilder for multiline content
           $sb = [System.Text.StringBuilder]::new()
-          [void]$sb.AppendLine("## v$version $appName")
+          [void]$sb.AppendLine("## v$env:STEP_VERSION $env:STEP_APP_NAME")
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("### What's New")
-          [void]$sb.AppendLine("This release includes the latest features and improvements for $appName.")
+          [void]$sb.AppendLine("This release includes the latest features and improvements for $env:STEP_APP_NAME.")
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("### Download")
           [void]$sb.AppendLine("- **Windows (x64) Portable**: Download the zip file from the assets below")
           [void]$sb.AppendLine("- **Windows (x64) Installer**: Download the MSI file from the assets below")
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("### Verification")
-          [void]$sb.AppendLine("1. Download the ``$artifactZipName`` or ``$artifactMsiName`` file from the GitHub release assets")
+          [void]$sb.AppendLine("1. Download the ``$env:STEP_ARTIFACT_ZIP_NAME`` or ``$env:STEP_ARTIFACT_MSI_NAME`` file from the GitHub release assets")
           [void]$sb.AppendLine("2. Copy the SHA256 for the downloaded file from the GitHub release assets")
           [void]$sb.AppendLine("3. Verify the file integrity: ``Get-FileHash <filename> -Algorithm SHA256``")
           [void]$sb.AppendLine("4. Compare with the hash returned with the SHA256 from GitHub")
@@ -240,7 +233,7 @@ jobs:
           [void]$sb.AppendLine("#### Portable (Zip)")
           [void]$sb.AppendLine("1. Download and verify the zip file (see Verification above)")
           [void]$sb.AppendLine("2. Extract the zip file to your desired location")
-          [void]$sb.AppendLine("3. Run ``$exeName`` to start the application")
+          [void]$sb.AppendLine("3. Run ``$env:STEP_EXE_NAME`` to start the application")
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("#### Installer (MSI)")
           [void]$sb.AppendLine("1. Download and verify the MSI file (see Verification above)")
