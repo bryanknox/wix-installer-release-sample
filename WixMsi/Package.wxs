@@ -16,6 +16,9 @@
       <ComponentRef Id="AppShortcutComp" />
     </Feature>
 
+    <!-- Specify the license file for the UI. Must be .rtf. -->
+    <WixVariable Id="WixUILicenseRtf" Value="eula.rtf" />
+
     <ui:WixUI
         Id="WixUI_InstallDir"
         InstallDirectory="INSTALLFOLDER"
