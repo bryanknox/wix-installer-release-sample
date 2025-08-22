@@ -1,4 +1,4 @@
-name: draft-vtag-release-zip
+name: draft-vtag-release
 
 on:
   workflow_dispatch: # Manual trigger.
@@ -20,12 +20,10 @@ env:
   MSI_WIX_PACKAGE_ID: 'bryanknox.SampleWpfApp.5fce338'
   MSI_WIX_PLATFORM: 'x64'
   MSI_WIX_PROJ_PATH: 'WixMsi/WixMsi.wixproj'
-  MSI_WIX_OUTPUT_PATH: ${{ runner.temp }}/msi-output
   MSI_WIX_MANUFACTURER: 'Bryan Knox'
   # Environment variables for WPF app
   CONFIGURATION: Release
   WPF_APP_CSPROJ_PATH: src/SampleWpfApp/SampleWpfApp.csproj
-  WPF_APP_PUB_OUTPUT_PATH: ${{ runner.temp }}/wpf-pub-output
   WPF_APP_RUNTIME: win-x64
   # Environment variables for zip artifact
 
@@ -114,6 +112,7 @@ jobs:
           $semVersion = "${{ needs.get-version-job.outputs.release-version }}"
           $semVersionDotZero  = ($semVersion + ".0")
           $semVersionDotBuildNumber = "$semVersion.$buildNumber"
+          $wpfAppPubOutputPath = "${{ runner.temp }}/wpf-pub-output"
 
           Write-Host "semVersionDotZero: $semVersionDotZero"
           Write-Host "semVersionDotBuildNumber: $semVersionDotBuildNumber"
@@ -123,7 +122,7 @@ jobs:
             --configuration $env:CONFIGURATION `
             --self-contained `
             --runtime $env:WPF_APP_RUNTIME `
-            --output $env:WPF_APP_PUB_OUTPUT_PATH `
+            --output $wpfAppPubOutputPath `
             --verbosity minimal `
             -p:Version=$semVersion `
             -p:AssemblyVersion=$semVersionDotZero  `
@@ -134,7 +133,7 @@ jobs:
       - name: 📦 Create Zip archive of WPF app
         shell: pwsh
         run: |
-          $wpfAppPublishedOutputPath = "$env:WPF_APP_PUB_OUTPUT_PATH"
+          $wpfAppPublishedOutputPath = "${{ runner.temp }}/wpf-pub-output"
           $zipPath = Join-Path "${{ runner.temp }}" "${{ steps.get-wpf-app-names.outputs.ZIP_FILE_NAME }}"
           Compress-Archive -Path "$wpfAppPublishedOutputPath\*" -DestinationPath $zipPath -Force
           Write-Host "Created zip archive: $zipPath"
@@ -155,6 +154,9 @@ jobs:
           STEP_MAIN_EXECUTABLE_FILE_NAME: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}.exe
           STEP_MSI_FILE_NAME_WITH_OUT_EXT: ${{ steps.get-wpf-app-names.outputs.MSI_NAME }}
         run: |
+          $wpfAppPubOutputPath = "${{ runner.temp }}/wpf-pub-output"
+          $msiWixOutputPath = "${{ runner.temp }}/msi-output"
+
           dotnet build `
             $env:MSI_WIX_PROJ_PATH `
             --configuration $env:CONFIGURATION `
@@ -164,9 +166,9 @@ jobs:
             -p:Platform=$env:MSI_WIX_PLATFORM `
             -p:ProductName=$env:STEP_PRODUCT_NAME `
             -p:Manufacturer=$env:MSI_WIX_MANUFACTURER `
-            -p:PublishedFilesPath=$env:WPF_APP_PUB_OUTPUT_PATH `
+            -p:PublishedFilesPath=$wpfAppPubOutputPath `
             -p:MsiFileName=$env:STEP_MSI_FILE_NAME_WITH_OUT_EXT `
-            -p:OutputPath=$env:MSI_WIX_OUTPUT_PATH
+            -p:OutputPath=$msiWixOutputPath
 
   draft-release-wpf-app-job:
     name: Create draft release for WPF app
