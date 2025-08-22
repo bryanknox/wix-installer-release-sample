@@ -145,36 +145,27 @@ jobs:
           name: "${{ steps.get-wpf-app-names.outputs.ZIP_ARTIFACT_NAME }}"
           path: Join-Path "${{ runner.temp }}" "${{ steps.get-wpf-app-names.outputs.ZIP_FILE_NAME }}"
           retention-days: 7
+          if-no-files-found: error
 
       - name: Create MSI for WPF app
         shell: pwsh
+        env:
+          STEP_PACKAGE_VERSION: ${{ needs.get-version-job.outputs.release-version }}.${{ github.run_number }}
+          STEP_PRODUCT_NAME: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}
+          STEP_MAIN_EXECUTABLE_FILE_NAME: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}.exe
+          STEP_MSI_FILE_NAME_WITH_OUT_EXT: ${{ steps.get-wpf-app-names.outputs.MSI_NAME }}
         run: |
-
-          $semVersion = "${{ needs.get-version-job.outputs.release-version }}"
-          $packageVersion = "${semVersion}.${env:GITHUB_RUN_NUMBER}"
-
-          $productName = "${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}"
-          $mainExecutableFileName = "${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}.exe"
-          $msiFileNameWithOutExt = "${{ steps.get-wpf-app-names.outputs.MSI_NAME }}"
-
-          Write-Host "packageVersion: $packageVersion"
-          Write-Host "productName: $productName"
-          Write-Host "manufacturer: $manufacturer"
-          Write-Host "mainExecutableFileName: $mainExecutableFileName"
-          Write-Host "msiFileNameWithOutExt: $msiFileNameWithOutExt"
-
-          # build WixMsi project.
           dotnet build `
             $env:MSI_WIX_PROJ_PATH `
             --configuration $env:CONFIGURATION `
             --verbosity minimal `
             -p:PackageId=$env:MSI_WIX_PACKAGE_ID `
-            -p:PackageVersion=$packageVersion `
+            -p:PackageVersion=$env:STEP_PACKAGE_VERSION `
             -p:Platform=$env:MSI_WIX_PLATFORM `
-            -p:ProductName=$productName `
+            -p:ProductName=$env:STEP_PRODUCT_NAME `
             -p:Manufacturer=$env:MSI_WIX_MANUFACTURER `
             -p:PublishedFilesPath=$env:WPF_APP_PUB_OUTPUT_PATH `
-            -p:MsiFileName=$msiFileNameWithOutExt `
+            -p:MsiFileName=$env:STEP_MSI_FILE_NAME_WITH_OUT_EXT `
             -p:OutputPath=$env:MSI_WIX_OUTPUT_PATH
 
   draft-release-wpf-app-job:
