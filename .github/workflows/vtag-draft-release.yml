@@ -39,9 +39,8 @@ jobs:
         id: get-version
         shell: pwsh
         run: |
-          $tagName = $env:GITHUB_REF -replace '^refs/tags/', ''
+          $tagName = "${{ github.ref_name }}"
           $version = $tagName -replace '^v', ''
-          Write-Host "GITHUB_REF: $env:GITHUB_REF"
           Write-Host "Tag name: $tagName"
           Write-Host "Release version: $version"
           # Output as workflow step variable.
@@ -126,8 +125,8 @@ jobs:
             --output $wpfAppPubOutputPath `
             --verbosity minimal `
             -p:Version=$semVersion `
-            -p:AssemblyVersion=$semVersionDotZero  `
-            -p:FileVersion=$semVersionDotZero  `
+            -p:AssemblyVersion=$semVersionDotZero `
+            -p:FileVersion=$semVersionDotZero `
             -p:InformationalVersion=$semVersionDotBuildNumber `
             -p:IncludeSourceRevisionInInformationalVersion=true
 
@@ -150,14 +149,13 @@ jobs:
       - name: 📦 Create MSI for WPF app
         shell: pwsh
         env:
-          STEP_PACKAGE_VERSION: ${{ needs.get-version-job.outputs.release-version }}.${{ github.run_number }}
-          STEP_PRODUCT_NAME: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}
           STEP_MAIN_EXECUTABLE_FILE_NAME: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}.exe
           STEP_MSI_FILE_NAME_WITH_OUT_EXT: ${{ steps.get-wpf-app-names.outputs.MSI_NAME }}
+          STEP_MSI_OUTPUT_PATH: ${{ runner.temp }}/msi-output
+          STEP_PACKAGE_VERSION: ${{ needs.get-version-job.outputs.release-version }}.${{ github.run_number }}
+          STEP_PRODUCT_NAME: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}
+          STEP_WPF_APP_PUB_FOLDER_PATH: ${{ runner.temp }}/wpf-pub-output
         run: |
-          $wpfAppPubOutputPath = "${{ runner.temp }}/wpf-pub-output"
-          $msiWixOutputPath = "${{ runner.temp }}/msi-output"
-
           dotnet build `
             $env:MSI_WIX_PROJ_PATH `
             --configuration $env:CONFIGURATION `
@@ -167,9 +165,9 @@ jobs:
             -p:Platform=$env:MSI_WIX_PLATFORM `
             -p:ProductName=$env:STEP_PRODUCT_NAME `
             -p:Manufacturer=$env:MSI_WIX_MANUFACTURER `
-            -p:PublishedFilesPath=$wpfAppPubOutputPath `
+            -p:PublishedFilesPath=$env:STEP_WPF_APP_PUB_FOLDER_PATH `
             -p:MsiFileName=$env:STEP_MSI_FILE_NAME_WITH_OUT_EXT `
-            -p:OutputPath=$msiWixOutputPath
+            -p:OutputPath=$env:STEP_MSI_OUTPUT_PATH
 
       - name: 📤 Upload MSI to Artifacts
         uses: actions/upload-artifact@v4
