@@ -56,6 +56,8 @@ jobs:
       wpf-app-assembly-name: ${{ steps.get-wpf-app-names.outputs.WPF_APP_ASSEMBLY_NAME }}
       zip-artifact-name: ${{ steps.get-wpf-app-names.outputs.ZIP_ARTIFACT_NAME }}
       zip-file-name: ${{ steps.get-wpf-app-names.outputs.ZIP_FILE_NAME }}
+      msi-artifact-name: ${{ steps.get-wpf-app-names.outputs.MSI_ARTIFACT_NAME }}
+      msi-file-name: ${{ steps.get-wpf-app-names.outputs.MSI_NAME }}.msi
     steps:
 
       - name: 🤘 Checkout repository
@@ -145,7 +147,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      - name: Create MSI for WPF app
+      - name: 📦 Create MSI for WPF app
         shell: pwsh
         env:
           STEP_PACKAGE_VERSION: ${{ needs.get-version-job.outputs.release-version }}.${{ github.run_number }}
@@ -169,6 +171,14 @@ jobs:
             -p:MsiFileName=$env:STEP_MSI_FILE_NAME_WITH_OUT_EXT `
             -p:OutputPath=$msiWixOutputPath
 
+      - name: 📤 Upload MSI to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ steps.get-wpf-app-names.outputs.MSI_ARTIFACT_NAME }}"
+          path: "${{ runner.temp }}/msi-output/en-US/*.msi"
+          retention-days: 7
+          if-no-files-found: error
+
   draft-release-wpf-app-job:
     name: Create draft release for WPF app
     runs-on: ubuntu-latest
@@ -190,6 +200,12 @@ jobs:
           name: ${{ needs.build-publish-wpf-app-artifact-job.outputs.zip-artifact-name }}
           path: ${{ runner.temp }}/dist
 
+      - name: 📥 Download MSI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-publish-wpf-app-artifact-job.outputs.msi-artifact-name }}
+          path: ${{ runner.temp }}/dist
+
       - name: 📝 Generate release notes
         id: release-notes
         shell: pwsh
@@ -198,11 +214,13 @@ jobs:
           $version = "${{ needs.get-version-job.outputs.release-version }}"
 
           $artifactZipName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.zip-file-name }}"
+          $artifactMsiName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.msi-file-name }}"
           $appName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}"
           $exeName = "${{ needs.build-publish-wpf-app-artifact-job.outputs.wpf-app-assembly-name }}.exe"
 
           Write-Host "version: $version"
           Write-Host "artifactZipName: $artifactZipName"
+          Write-Host "artifactMsiName: $artifactMsiName"
           Write-Host "appName: $appName"
           Write-Host "exeName: $exeName"
 
@@ -214,18 +232,25 @@ jobs:
           [void]$sb.AppendLine("This release includes the latest features and improvements for $appName.")
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("### Download")
-          [void]$sb.AppendLine("- **Windows (x64)**: Download the zip file from the assets below")
+          [void]$sb.AppendLine("- **Windows (x64) Portable**: Download the zip file from the assets below")
+          [void]$sb.AppendLine("- **Windows (x64) Installer**: Download the MSI file from the assets below")
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("### Verification")
-          [void]$sb.AppendLine("1. Download the ``$artifactZipName`` file from the GitHub release assets")
-          [void]$sb.AppendLine("2. Copy the SHA256 for the ``$artifactZipName`` file from the GitHub release assets")
-          [void]$sb.AppendLine("3. Verify the zip file integrity: ``Get-FileHash $artifactZipName -Algorithm SHA256``")
+          [void]$sb.AppendLine("1. Download the ``$artifactZipName`` or ``$artifactMsiName`` file from the GitHub release assets")
+          [void]$sb.AppendLine("2. Copy the SHA256 for the downloaded file from the GitHub release assets")
+          [void]$sb.AppendLine("3. Verify the file integrity: ``Get-FileHash <filename> -Algorithm SHA256``")
           [void]$sb.AppendLine("4. Compare with the hash returned with the SHA256 from GitHub")
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("### Installation")
+          [void]$sb.AppendLine("#### Portable (Zip)")
           [void]$sb.AppendLine("1. Download and verify the zip file (see Verification above)")
           [void]$sb.AppendLine("2. Extract the zip file to your desired location")
           [void]$sb.AppendLine("3. Run ``$exeName`` to start the application")
+          [void]$sb.AppendLine("")
+          [void]$sb.AppendLine("#### Installer (MSI)")
+          [void]$sb.AppendLine("1. Download and verify the MSI file (see Verification above)")
+          [void]$sb.AppendLine("2. Run the MSI installer to install the application")
+          [void]$sb.AppendLine("3. Launch the application from the Start Menu or Desktop shortcut")
           [void]$sb.AppendLine("")
           [void]$sb.AppendLine("### System Requirements")
           [void]$sb.AppendLine("- Windows 10 version 1809 or later")
