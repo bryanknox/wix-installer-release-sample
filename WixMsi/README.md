@@ -32,7 +32,7 @@ The installer supports the following parameters:
 | Parameter | Description | Default Value |
 |-----------|-------------|---------------|
 | `PackageId` | Unique identifier for the package | "bryanknox.SampleWpfApp.5fce338" |
-| `PackageVersion` | 4-part version number (e.g., "1.2.3.0") | "1.0.0.0" |
+| `PackageVersion` | 3-part version number (e.g., "1.2.3") | "1.0.0" |
 | `ProductName` | Display name of the product | "Sample WPF App" |
 | `Manufacturer` | Company/manufacturer name | "Bryan Knox" |
 | `PublishedFilesPath` | Path to published application files | "../local-published/SampleWpfApp-output" |
@@ -104,7 +104,7 @@ dotnet build WixMsi\WixMsi.wixproj `
   -p:Platform=x64 `
   -p:ProductName="Sample WPF App" `
   -p:Manufacturer="Bryan Knox" `
-  -p:PackageVersion="1.2.3.0" `
+  -p:PackageVersion="1.2.3" `
   -p:PublishedFilesPath="C:\full\path\to\published\files" `
   -p:MsiFileName="MyApp-Setup"
 ```
@@ -117,7 +117,7 @@ msbuild WixMsi\WixMsi.wixproj `
   /p:Platform=x64 `
   /p:ProductName="Sample WPF App" `
   /p:Manufacturer="Bryan Knox" `
-  /p:PackageVersion="1.2.3.0" `
+  /p:PackageVersion="1.2.3" `
   /p:PublishedFilesPath="C:\full\path\to\published\files" `
   /p:MsiFileName="MyApp-Setup"
 ```
@@ -147,7 +147,7 @@ Example GitHub Actions usage:
       -p:Platform=x64 `
       -p:ProductName="Sample WPF App" `
       -p:Manufacturer="Bryan Knox" `
-      -p:PackageVersion="${{ github.event.inputs.version }}.0" `
+      -p:PackageVersion="${{ github.event.inputs.version }}" `
       -p:PublishedFilesPath="${{ github.workspace }}/published-output" `
       -p:MsiFileName="SampleWpfApp-${{ github.event.inputs.version }}-Setup"
 ```
@@ -156,7 +156,10 @@ Example GitHub Actions usage:
 
 ### Version Handling
 
-- The installer expects a 4-part `PackageVersion` version number (e.g., "1.2.3.4")
+- The installer expects a 3-part `PackageVersion` version number (e.g., "1.2.3").
+  Otherwise, Windows Installer will ignore any fourth field (e.g. 1.2.3.4)
+  and may not detect upgrades correctly.
+
 - Version is used for MSI package versioning and upgrade logic
 
 ### MSI File Naming
@@ -193,7 +196,8 @@ Example GitHub Actions usage:
    - Check that version numbers are incrementing properly (newer versions should have higher numbers)
 
 5. **"Upgrade not working"**
-   - Verify the `PackageVersion` is higher than the currently installed version
+   - Verify that `PackageVersion` is strictly 3-parts (`1.2.3`).
+   - Verify the `PackageVersion` is equal to or higher than the currently installed version.
    - Ensure the `PackageId` matches between versions
    - Check Windows Event Viewer for MSI installation logs if needed
 

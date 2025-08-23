@@ -93,9 +93,6 @@ try {
         throw "WiX project file '$WIX_PROJECT_PATH' not found."
     }
 
-    # Convert 3-part version to 4-part version for MSI
-    $packageVersion = "$Version.0"
-
     # Resolve the published files path to an absolute path
     if ([System.IO.Path]::IsPathRooted($PublishedFilesPath)) {
         $absolutePublishedFilesPath = $PublishedFilesPath
@@ -143,7 +140,7 @@ try {
 
     Write-Host "📋 Build configuration:" -ForegroundColor Cyan
     Write-Host "  - Package Id: $PackageId"
-    Write-Host "  - Package Version: $packageVersion"
+    Write-Host "  - Package Version: $Version"
     Write-Host "  - Product Name: $ProductName"
     Write-Host "  - Manufacturer: $Manufacturer"
     Write-Host "  - Version: $Version"
@@ -171,7 +168,7 @@ try {
         '--configuration', $Configuration
         '--verbosity', 'minimal'
         "-p:PackageId=$PackageId"
-        "-p:PackageVersion=$packageVersion"
+        "-p:PackageVersion=$Version"
         "-p:Platform=$Platform"
         "-p:ProductName=$ProductName"
         "-p:Manufacturer=$Manufacturer"

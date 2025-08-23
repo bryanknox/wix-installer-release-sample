@@ -3,7 +3,7 @@
   <PropertyGroup>
     <!-- Default values for parameterization - can be overridden via command line or environment -->
     <PackageId Condition="'$(PackageId)' == ''">bryanknox.SampleWpfApp.5fce338</PackageId>
-    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0.0</PackageVersion>
+    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0</PackageVersion>
     <ProductName Condition="'$(ProductName)' == ''">Sample WPF App</ProductName>
     <Manufacturer Condition="'$(Manufacturer)' == ''">Bryan Knox</Manufacturer>
     <PublishedFilesPath Condition="'$(PublishedFilesPath)' == ''">$(MSBuildProjectDirectory)\..\local-published\SampleWpfApp-output</PublishedFilesPath>

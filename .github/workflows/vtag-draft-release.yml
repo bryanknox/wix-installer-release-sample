@@ -150,7 +150,7 @@ jobs:
           STEP_MAIN_EXECUTABLE_FILE_NAME: ${{ steps.get-names.outputs.WPF_APP_ASSEMBLY_NAME }}.exe
           STEP_MSI_FILE_NAME_WITH_OUT_EXT: ${{ steps.get-names.outputs.MSI_NAME }}
           STEP_MSI_OUTPUT_PATH: ${{ runner.temp }}/msi-output
-          STEP_PACKAGE_VERSION: ${{ needs.get-version-job.outputs.release-version }}.${{ github.run_number }}
+          STEP_PACKAGE_VERSION: ${{ needs.get-version-job.outputs.release-version }}
           STEP_PRODUCT_NAME: ${{ steps.get-names.outputs.WPF_APP_ASSEMBLY_NAME }}
           STEP_WPF_APP_PUB_FOLDER_PATH: ${{ runner.temp }}/wpf-pub-output
         run: |
