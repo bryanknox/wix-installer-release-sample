@@ -5,7 +5,8 @@
     Version="$(var.PackageVersion)"
     Name="$(var.ProductName)"
     Manufacturer="$(var.Manufacturer)"
-    Scope="perUser">
+    Scope="perUser"
+    UpgradeStrategy="majorUpgrade">
 
     <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
 

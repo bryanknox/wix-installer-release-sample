@@ -39,6 +39,26 @@ The installer supports the following parameters:
 | `MainExecutableFileName` | Name of the main executable file in the PublishedFilesPath | "SampleWpfApp.exe" |
 | `MsiFileName` | Base name for the generated MSI file (without .msi extension) | "WixMsi" |
 
+### Version Upgrades
+
+The installer is configured with WiX 6's modern upgrade strategy using the `UpgradeStrategy="majorUpgrade"` attribute. This ensures that:
+
+- **Automatic Upgrades**: When a newer version is installed, it automatically replaces the previous version
+- **Single Entry in Add/Remove Programs**: Only one version appears in Windows "Installed Apps" list
+- **Preserved Settings**: User settings and configurations are maintained during upgrades
+- **Downgrade Protection**: Installing an older version over a newer one is blocked by default
+
+**How it works:**
+- The `PackageId` remains constant across all versions (acts as the upgrade family identifier)
+- The `PackageVersion` changes with each release
+- The `ProductCode` is automatically generated uniquely for each build
+- Windows Installer uses the PackageId to detect and upgrade related products
+
+**Version Numbering:**
+- Use 4-part version numbers (e.g., "1.2.3.10")
+- Increment the version number for each release to enable proper upgrade detection
+- The GitHub workflow automatically appends the build number to create unique versions
+
 ## Usage
 
 ### Prerequisites
@@ -136,8 +156,7 @@ Example GitHub Actions usage:
 
 ### Version Handling
 
-- The installer expects a 4-part version number (e.g., "1.2.3.0")
-- Scripts automatically convert 3-part semantic versions to 4-part versions
+- The installer expects a 4-part `PackageVersion` version number (e.g., "1.2.3.4")
 - Version is used for MSI package versioning and upgrade logic
 
 ### MSI File Naming
@@ -167,6 +186,16 @@ Example GitHub Actions usage:
 3. **"Bind path not resolved"**
    - Check that the `PublishedFilesPath` is an absolute path
    - Verify that the path contains the published application files
+
+4. **"Multiple versions appearing in Add/Remove Programs"**
+   - Ensure all installers use the same `PackageId` value
+   - Verify that `UpgradeStrategy="majorUpgrade"` is set in Package.wxs
+   - Check that version numbers are incrementing properly (newer versions should have higher numbers)
+
+5. **"Upgrade not working"**
+   - Verify the `PackageVersion` is higher than the currently installed version
+   - Ensure the `PackageId` matches between versions
+   - Check Windows Event Viewer for MSI installation logs if needed
 
 ### Debugging
 
