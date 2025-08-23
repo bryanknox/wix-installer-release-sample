@@ -8,7 +8,21 @@
     Scope="perUser"
     UpgradeStrategy="majorUpgrade">
 
-    <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
+    <!--
+      Enable same-version upgrades so rebuilding the MSI with the same
+      three-part PackageVersion replaces the existing installation instead of
+      creating a second entry in Windows' Installed Apps.
+
+      NOTE: This also means an older build with the same three-part version
+      can "upgrade" (effectively downgrade) a newer build.
+
+      Best practice is to bump one of the first three version fields for
+      released builds.
+    -->
+    <MajorUpgrade
+        AllowSameVersionUpgrades="yes"
+        DowngradeErrorMessage="!(loc.DowngradeError)"
+    />
 
     <MediaTemplate EmbedCab="true" />
 
