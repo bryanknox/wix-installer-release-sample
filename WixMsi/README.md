@@ -159,8 +159,6 @@ Example GitHub Actions usage:
 ### Version Handling
 
 - The installer expects a strict 3-part `PackageVersion` version number (e.g., "1.2.3").
-  Otherwise, Windows Installer will ignore any fourth field (e.g. 1.2.3.4)
-  and may not detect upgrades correctly.
 
 - Version is used for MSI package versioning and upgrade logic
 
