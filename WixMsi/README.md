@@ -55,9 +55,11 @@ The installer is configured with WiX 6's modern upgrade strategy using the `Upgr
 - Windows Installer uses the PackageId to detect and upgrade related products
 
 **Version Numbering:**
-- Use 4-part version numbers (e.g., "1.2.3.10")
+- Use strict 3-part version numbers (e.g., "1.2.3")
+  - The installer expects a strict 3-part `PackageVersion` version number (e.g., "1.2.3").
+    Otherwise, Windows Installer will ignore any fourth field (e.g. 1.2.3.4)
+    and may not detect upgrades correctly.
 - Increment the version number for each release to enable proper upgrade detection
-- The GitHub workflow automatically appends the build number to create unique versions
 
 ## Usage
 
@@ -156,7 +158,7 @@ Example GitHub Actions usage:
 
 ### Version Handling
 
-- The installer expects a 3-part `PackageVersion` version number (e.g., "1.2.3").
+- The installer expects a strict 3-part `PackageVersion` version number (e.g., "1.2.3").
   Otherwise, Windows Installer will ignore any fourth field (e.g. 1.2.3.4)
   and may not detect upgrades correctly.
 
