@@ -112,7 +112,6 @@ jobs:
           STEP_BUILD_NUMBER: ${{ github.run_number }}
           STEP_SEM_VERSION: ${{ needs.get-version-job.outputs.release-version }}
           STEP_SEM_VERSION_DOT_ZERO: ${{ needs.get-version-job.outputs.release-version }}.0
-          STEP_SEM_VERSION_DOT_BUILD_NUMBER: ${{ needs.get-version-job.outputs.release-version }}.${{ github.run_number }}
           STEP_WPF_APP_PUB_OUTPUT_PATH: ${{ runner.temp }}/wpf-pub-output
         run: |
           dotnet publish `
@@ -125,7 +124,6 @@ jobs:
             -p:Version=$env:STEP_SEM_VERSION `
             -p:AssemblyVersion=$env:STEP_SEM_VERSION_DOT_ZERO `
             -p:FileVersion=$env:STEP_SEM_VERSION_DOT_ZERO `
-            -p:InformationalVersion=$env:STEP_SEM_VERSION_DOT_BUILD_NUMBER `
             -p:IncludeSourceRevisionInInformationalVersion=true
 
       - name: 📦 Create Zip archive of WPF app

@@ -63,17 +63,14 @@ try {
     Write-Host "✅ Extracted WPF app assembly name: $assemblyName" -ForegroundColor Green
 
     # Generate build number (using current timestamp for local builds)
-    $buildNumber = (Get-Date).ToString('yyyyMMddHHmm')
     $semVersion = $Version
     $semVersionDotZero = "$semVersion.0"
-    $semVersionDotBuildNumber = "$semVersion.$buildNumber"
 
     Write-Host "📋 Build configuration:" -ForegroundColor Cyan
     Write-Host "  - Assembly Name: $assemblyName"
     Write-Host "  - Version: $semVersion"
     Write-Host "  - Assembly Version: $semVersionDotZero"
     Write-Host "  - File Version: $semVersionDotZero"
-    Write-Host "  - Informational Version: $semVersionDotBuildNumber"
     Write-Host "  - Configuration: $CONFIGURATION"
     Write-Host "  - Target Runtime: $TARGET_RUNTIME"
     Write-Host "  - Output Directory: $OUTPUT_DIR"
@@ -110,8 +107,7 @@ try {
         "-p:Version=$semVersion"
         "-p:AssemblyVersion=$semVersionDotZero"
         "-p:FileVersion=$semVersionDotZero"
-        "-p:InformationalVersion=$semVersionDotBuildNumber"
-        '-p:IncludeSourceRevisionInInformationalVersion=true'
+        "-p:IncludeSourceRevisionInInformationalVersion=true"
     )
 
     Write-Host "  - Running: dotnet $($publishArgs -join ' ')" -ForegroundColor Gray
