@@ -1,25 +1,33 @@
-# wpf-release-play
+# wix-installer-release-sample README
 
-This repo is for playing around with release workflows for WPF apps.
-Seems weird. But there are some advantages to WPF-Blazor hybrid apps
-over MAUI-Blazor hybrid apps. So it's worth figuring out the nuances
-of the release workflows.
+A sample WiX installer project for a .NET app with GitHub Actions workflow for creating releases of the installer.
+
+The sample WiX installer project and GitHub workflows can be easily adapted to other .NET applications.
 
 ## Key Features
 
-- Super simple WPF Sample App (does nothing but display a blank window)
+- Super simple .NET 9 WPF sample app (does nothing but display a blank window)
+  - It is meant as a place holder app to be installed.
 
-- Wix 6 MSI installer project for the WPF Sample App.
+- Wix 6 MSI installer project for the WPF sample app.
 
-- GitHub Actions workflow for CI and Releasing the WPF Sample App MSI.
+- GitHub Actions workflows for:
+  - CI of the WPF sample App
+  - Release of the WiX MSI.
+    - Publishes a GitHub release of the WiX based MSI installer for the WPF sample app.
+      - And also a .zip archive of the WPF sample app's built files that can be manually installed.
+
+- PowerShell scripts used by workflows
+  - And Pester unit tests for those PowerShell scripts
 
 - GitHub Copilot custom chat mode instructions.
+
 
 ## Folder structure
 
 `docs\guidelines\` - Guidelines for devs and GitHub Copilot agents developing in this repo.
 
-`scripts\` - Scripts for development and testing.
+`scripts\` - Scripts for development and local dev testing.
 
 `src\SampleWpfApp\` - Sample WPF app. Just a raw sample doesn't do anything interesting.
 
@@ -67,17 +75,19 @@ Invoke-Pester -Path "Get-AssemblyNameOrExit.Tests.ps1" -OutputFile "TestResults.
 
 ## Create a Release
 
-A release of the sample app can be created by pushing a v-tag to the GitHub repo.
+Pushing a v-tag to the GitHub repo will trigger the `.github\workflows\vtag-release.yml` GitHub Actions workflow.
+That workflow will build the app and MSI installer, and the publish a GitHub release assocated with the v-tag.
 
+A v-tag is a git tag like: `v1.2.3`. It must be a strict 3-part sematic version.
+
+You can use git commands like the following create and push the v-tag:
 ```PowerShell
 git tag -a v1.2.3 -m "Release version 1.2.3"
 
 git push origin v1.2.3
 ```
 
-Or calling the dev script:
+Or, better yet, use the PowerShell script:
 ```PowerShell
 .\scripts\CreateVTagRelease.ps1 -Version 1.2.3
 ```
-
-Pushing the vt-tag that will trigger the `.github\workflows\vtag-release.yml` GitHub Actions workflow.
