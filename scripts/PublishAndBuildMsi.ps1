@@ -76,8 +76,8 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # Define script paths
-$PUBLISH_SCRIPT = 'scripts\PublishLocalSampleWpfApp.ps1'
-$BUILD_MSI_SCRIPT = 'scripts\BuildWixMsi.ps1'
+$PUBLISH_SCRIPT = Join-Path 'scripts' 'PublishLocalSampleWpfApp.ps1'
+$BUILD_MSI_SCRIPT = Join-Path 'scripts' 'BuildWixMsi.ps1'
 
 try {
     Write-Host "🚀 Starting complete build pipeline for $ProductName v$Version" -ForegroundColor Green
