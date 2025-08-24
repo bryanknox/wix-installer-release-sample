@@ -5,21 +5,33 @@ Seems weird. But there are some advantages to WPF-Blazor hybrid apps
 over MAUI-Blazor hybrid apps. So it's worth figuring out the nuances
 of the release workflows.
 
+## Key Features
+
+- Super simple WPF Sample App (does nothing but display a blank window)
+
+- Wix 6 MSI installer project for the WPF Sample App.
+
+- GitHub Actions workflow for CI and Releasing the WPF Sample App MSI.
+
+- GitHub Copilot custom chat mode instructions.
+
 ## Folder structure
 
-`docs\guidelines` - Guidelines for devs and agents developing in this repo.
+`docs\guidelines\` - Guidelines for devs and GitHub Copilot agents developing in this repo.
 
 `scripts\` - Scripts for development and testing.
 
-`src\SampleWpfApp` - Sample WPF app. Just a raw sample doesn't do anything interesting.
+`src\SampleWpfApp\` - Sample WPF app. Just a raw sample doesn't do anything interesting.
 
-`.github\chatmodes` - GitHub Copilot custom chat modes.
+`WixMsi\` - WiX project for the Sample WPF app's installer (MSI).
 
-`.github\workflows` - GitHub Actions workflows.
+`.github\chatmodes\` - GitHub Copilot custom chat modes.
 
-`.github\workflows\pwsh` - PowerShell scripts used by workflows.
+`.github\workflows\` - GitHub Actions workflows.
 
-`.github\workflows\pwsh-unit-tests` - Tests for Powershell scripts used by workflows.
+`.github\workflows\pwsh\` - PowerShell scripts used by workflows.
+
+`.github\workflows\pwsh-unit-tests\` - Tests for Powershell scripts used by workflows.
 
 ## Running Workflow PowerShell Unit Tests
 
@@ -63,4 +75,4 @@ git tag -a v1.2.3 -m "Release version 1.2.3"
 git push origin v1.2.3
 ```
 
-Doing that will trigger the `.github\workflows\vtag-draft-release-zip.yml` GitHub Actions workflow.
+Doing that will trigger the `.github\workflows\vtag-draft-release.yml` GitHub Actions workflow.
