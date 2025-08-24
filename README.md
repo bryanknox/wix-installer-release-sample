@@ -2,7 +2,8 @@
 
 A sample WiX installer project for a .NET app with GitHub Actions workflow for creating releases of the installer.
 
-The sample WiX installer project and GitHub workflows can be easily adapted to other .NET applications.
+The sample WiX installer project and GitHub workflows can be easily adapted to other .NET applications
+that need an MSI for installation on Windows machines.
 
 ## Key Features
 
