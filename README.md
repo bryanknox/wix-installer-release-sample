@@ -65,9 +65,9 @@ Invoke-Pester -Path "Get-AssemblyNameOrExit.Tests.ps1" -CodeCoverage "../pwsh/Ge
 Invoke-Pester -Path "Get-AssemblyNameOrExit.Tests.ps1" -OutputFile "TestResults.xml" -OutputFormat NUnitXml
 ```
 
-## Create a Draft Release
+## Create a Release
 
-A draft release of the sample app can be created by pushing a v-tag to the GitHub repo.
+A release of the sample app can be created by pushing a v-tag to the GitHub repo.
 
 ```PowerShell
 git tag -a v1.2.3 -m "Release version 1.2.3"
@@ -75,4 +75,9 @@ git tag -a v1.2.3 -m "Release version 1.2.3"
 git push origin v1.2.3
 ```
 
-Doing that will trigger the `.github\workflows\vtag-draft-release.yml` GitHub Actions workflow.
+Or calling the dev script:
+```PowerShell
+.\scripts\CreateVTagRelease.ps1 -Version 1.2.3
+```
+
+Pushing the vt-tag that will trigger the `.github\workflows\vtag-release.yml` GitHub Actions workflow.

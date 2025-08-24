@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Creates a new vTag (version tag) in the GitHub repo, which will trigger
+    Creates a new v-tag (version tag) in the GitHub repo, which will trigger
     a GitHub Actions workflow to publish a new release of the app and its MSI installer.
 
 .DESCRIPTION
@@ -12,7 +12,7 @@
     The script enforces strict 3-part semantic versioning (e.g., "1.2.3")
     and automatically prefixes the tag with "v".
 
-    Pushing a vTag to the GitHub repo triggers a GitHub Actions workflow
+    Pushing a v-tag to the GitHub repo triggers a GitHub Actions workflow
     that will build and publish a new release of the app and its MSI installer.
 
 .PARAMETER Version
