@@ -27,20 +27,6 @@ The installer uses the WiX 6 `Files` element to automatically harvest all files 
 
 See [Files Element Documentation](https://docs.firegiant.com/wix/schema/wxs/files/) in the WiX Core docs.
 
-### Parameterization
-
-The installer supports the following parameters:
-
-| Parameter | Description | Default Value |
-|-----------|-------------|---------------|
-| `PackageId` | Unique identifier for the package | "bryanknox.SampleWpfApp.5fce338" |
-| `PackageVersion` | 3-part version number (e.g., "1.2.3") | "1.0.0" |
-| `ProductName` | Display name of the product | "Sample WPF App" |
-| `Manufacturer` | Company/manufacturer name | "Bryan Knox" |
-| `PublishedFilesPath` | Path to published application files | "../local-published/SampleWpfApp-output" |
-| `MainExecutableFileName` | Name of the main executable file in the PublishedFilesPath | "SampleWpfApp.exe" |
-| `MsiFileName` | Base name for the generated MSI file (without .msi extension) | "WixMsi" |
-
 ### Version Upgrades
 
 The installer is configured with WiX 6's modern upgrade strategy using the `UpgradeStrategy="majorUpgrade"` attribute. This ensures that:
@@ -62,6 +48,20 @@ The installer is configured with WiX 6's modern upgrade strategy using the `Upgr
     Otherwise, Windows Installer will ignore any fourth field (e.g. 1.2.3.4)
     and may not detect upgrades correctly.
 - Increment the version number for each release to enable proper upgrade detection
+
+## Parameterization
+
+The installer project supports the following parameters:
+
+| Parameter | Description | Default Value |
+|-----------|-------------|---------------|
+| `PackageId` | Unique identifier for the package | "bryanknox.SampleWpfApp.5fce338" |
+| `PackageVersion` | 3-part version number (e.g., "1.2.3") | "1.0.0" |
+| `ProductName` | Display name of the product | "Sample WPF App" |
+| `Manufacturer` | Company/manufacturer name | "Bryan Knox" |
+| `PublishedFilesPath` | Path to published application files | "../local-published/SampleWpfApp-output" |
+| `MainExecutableFileName` | Name of the main executable file in the PublishedFilesPath | "SampleWpfApp.exe" |
+| `MsiFileName` | Base name for the generated MSI file (without .msi extension) | "WixMsi" |
 
 ## Usage
 
