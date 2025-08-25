@@ -2,9 +2,11 @@
 
 This directory contains a WiX 6 installer project that creates an MSI installer for the Sample WPF Application. The installer project is fully parameterized to support different build scenarios.
 
+This WiX installer project can be easily adapted to other .NET applications that need an MSI for installation on Windows machines.
+
 ## Overview
 
-The WiX installer project uses the WiX 6 Toolset with HeatWave Community Edition features:
+The WiX installer project uses the WiX 6 Toolset.
 
 - **File Harvesting**: Uses the `Files` element to automatically harvest all files from the published application output
 - **Parameterization**: Supports configurable product name, manufacturer, version, file paths, and MSI filename
