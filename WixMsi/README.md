@@ -2,9 +2,11 @@
 
 This directory contains a WiX 6 installer project that creates an MSI installer for the Sample WPF Application. The installer project is fully parameterized to support different build scenarios.
 
+This WiX installer project can be easily adapted to other .NET applications that need an MSI for installation on Windows machines.
+
 ## Overview
 
-The WiX installer project uses the WiX 6 Toolset with HeatWave Community Edition features:
+The WiX installer project uses the WiX 6 Toolset.
 
 - **File Harvesting**: Uses the `Files` element to automatically harvest all files from the published application output
 - **Parameterization**: Supports configurable product name, manufacturer, version, file paths, and MSI filename
@@ -19,29 +21,69 @@ The WiX installer project uses the WiX 6 Toolset with HeatWave Community Edition
 
 ## Key Features
 
-### File Harvesting with `Files` Element
+The WiX 6 installer implements the following key features:
 
-The installer uses the WiX 6 `Files` element to automatically harvest all files in the published application directory.
+- **Per-User Installation**: Installs to the user's local application data folder, no admin privileges required
+- **Selectable Install Location**: Users can choose the installation directory via WixUI_InstallDir dialog
+- **End User License Agreement (EULA)**: Displays license agreement during installation
+- **Automatic File Harvesting**: Uses WiX 6 `Files` element to include all published application files
+- **Start Menu Shortcuts**: Creates application shortcuts in the user's Start Menu
+- **Major Version Upgrades**: Automatic upgrade/replacement of previous versions
+- **Downgrade Protection**: Prevents installation of older versions over newer ones
+- **Parameterized Build**: Configurable product name, version, manufacturer, and file paths
+- **Localization Support**: Supports multiple languages (currently en-US included)
+- **Embedded Installation Files**: All files embedded in MSI for single-file distribution
+
+### Per-User Installation
+
+The installer is configured with `Scope="perUser"` which provides several benefits:
+
+- **No Administrator Rights Required**: Users can install the application without elevated privileges
+- **User-Specific Installation**: Each user gets their own copy of the application
+- **Clean Uninstall**: Complete removal without affecting other users or system files
+- **Installation Location**: Files are installed to `%LOCALAPPDATA%\{ProductName}` by default
+
+### Selectable Install Location
+
+The installer uses the WiX 6 `WixUI_InstallDir` dialog set to provide users with the ability to choose their installation directory:
+
+- **Default Location**: `%LOCALAPPDATA%\{ProductName}` (user's local application data folder)
+- **Custom Location**: Users can browse and select any accessible directory
+- **Directory Creation**: Installer automatically creates the selected directory if it doesn't exist
+- **Path Validation**: Ensures the selected path is valid and accessible
+
+### End User License Agreement (EULA)
+
+The installer includes a license agreement step in the installation wizard:
+
+- **RTF Format**: License is displayed from the `eula.rtf` file included in the project
+- **Required Acceptance**: Users must accept the license terms before proceeding with installation
+- **Customizable**: Replace `eula.rtf` with your own license agreement
+- **Localization**: License text can be localized for different languages
+
+### Automatic File Harvesting
+
+The installer uses the WiX 6 `Files` element to automatically harvest all files from the published application directory:
+
+- **Dynamic File Discovery**: Automatically includes all files from the `PublishedFilesPath` without manual enumeration
+- **Recursive Directory Support**: Includes files from subdirectories using the `**` wildcard pattern
+- **No Manual Maintenance**: New files are automatically included when the application is updated
+- **Preserves Directory Structure**: Maintains the original folder structure in the installation
 
 See [Files Element Documentation](https://docs.firegiant.com/wix/schema/wxs/files/) in the WiX Core docs.
 
-### Parameterization
+### Start Menu Shortcuts
 
-The installer supports the following parameters:
+The installer creates Start Menu shortcuts for easy application access:
 
-| Parameter | Description | Default Value |
-|-----------|-------------|---------------|
-| `PackageId` | Unique identifier for the package | "bryanknox.SampleWpfApp.5fce338" |
-| `PackageVersion` | 3-part version number (e.g., "1.2.3") | "1.0.0" |
-| `ProductName` | Display name of the product | "Sample WPF App" |
-| `Manufacturer` | Company/manufacturer name | "Bryan Knox" |
-| `PublishedFilesPath` | Path to published application files | "../local-published/SampleWpfApp-output" |
-| `MainExecutableFileName` | Name of the main executable file in the PublishedFilesPath | "SampleWpfApp.exe" |
-| `MsiFileName` | Base name for the generated MSI file (without .msi extension) | "WixMsi" |
+- **Program Menu Integration**: Creates shortcuts in the user's Programs folder
+- **Product-Specific Folder**: Shortcuts are organized under a folder named after the product
+- **Clean Uninstall**: Shortcuts and folders are automatically removed during uninstallation
+- **Working Directory**: Shortcuts are configured with the correct working directory
 
-### Version Upgrades
+### Major Version Upgrades
 
-The installer is configured with WiX 6's modern upgrade strategy using the `UpgradeStrategy="majorUpgrade"` attribute. This ensures that:
+The installer is configured with WiX 6's modern upgrade strategy using the `UpgradeStrategy="majorUpgrade"` attribute. This ensures:
 
 - **Automatic Upgrades**: When a newer version is installed, it automatically replaces the previous version
 - **Single Entry in Add/Remove Programs**: Only one version appears in Windows "Installed Apps" list
@@ -60,6 +102,48 @@ The installer is configured with WiX 6's modern upgrade strategy using the `Upgr
     Otherwise, Windows Installer will ignore any fourth field (e.g. 1.2.3.4)
     and may not detect upgrades correctly.
 - Increment the version number for each release to enable proper upgrade detection
+
+### Parameterized Build System
+
+The installer project is fully parameterized to support different build scenarios and easy customization:
+
+- **Product Information**: Configurable product name, manufacturer, and version
+- **File Paths**: Customizable paths for published files and main executable
+- **MSI Output**: Configurable MSI filename and output location
+- **Build Integration**: Easy integration with CI/CD pipelines and build scripts
+- **Default Values**: Sensible defaults provided for all parameters
+
+### Localization Support
+
+The installer is designed to support multiple languages and regions:
+
+- **String Resources**: All user-visible text is externalized to `.wxl` localization files
+- **Current Support**: US English (en-US) localization included
+- **Extensible Design**: Additional languages can be added by creating new `.wxl` files
+- **Culture-Specific Builds**: Can build MSI packages for specific cultures and regions
+
+### Embedded Installation Files
+
+The installer is configured for single-file distribution:
+
+- **Embedded CAB**: All installation files are embedded directly in the MSI using `EmbedCab="true"`
+- **No External Dependencies**: MSI contains everything needed for installation
+- **Simplified Distribution**: Single MSI file can be distributed without additional files
+- **Reduced File Count**: Eliminates the need for separate CAB files or external media
+
+## Parameterization
+
+The installer project supports the following parameters:
+
+| Parameter | Description | Default Value |
+|-----------|-------------|---------------|
+| `PackageId` | Unique identifier for the package | "bryanknox.SampleWpfApp.5fce338" |
+| `PackageVersion` | 3-part version number (e.g., "1.2.3") | "1.0.0" |
+| `ProductName` | Display name of the product | "Sample WPF App" |
+| `Manufacturer` | Company/manufacturer name | "Bryan Knox" |
+| `PublishedFilesPath` | Path to published application files | "../local-published/SampleWpfApp-output" |
+| `MainExecutableFileName` | Name of the main executable file in the PublishedFilesPath | "SampleWpfApp.exe" |
+| `MsiFileName` | Base name for the generated MSI file (without .msi extension) | "WixMsi" |
 
 ## Usage
 
