@@ -297,3 +297,10 @@ dotnet build WixMsi\WixMsi.wixproj --verbosity detailed
 
 - [WiX Toolset Documentation](https://docs.firegiant.com/wix/)
 
+## WiX Toolset and Open Source Maintenance Fee
+
+Building this project uses the WiX Toolset (c) .NET Foundation and contributors, licensed under MS-RL.
+
+If you use the WixToolset in your projects and your project or organizations makes money, then WiX Toolset requires an [Open Source Maintenance Fee](https://opensourcemaintenancefee.org/).
+
+For details see: https://github.com/sponsors/wixtoolset
